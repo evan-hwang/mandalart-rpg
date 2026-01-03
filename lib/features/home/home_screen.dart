@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mandalart/features/mandalart/mandalart.dart';
+import 'package:mandalart/features/mandalart/mandalart_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -126,7 +127,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: Text(mandalart.title),
                       subtitle: Text(mandalart.dateRangeLabel),
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _openMandalartEditor(existing: mandalart),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                MandalartDetailScreen(mandalart: mandalart),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 );
