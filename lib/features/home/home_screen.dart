@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mandalart/core/constants/app_colors.dart';
+import 'package:mandalart/core/models/goal.dart';
 import 'package:mandalart/data/db/app_database.dart';
 import 'package:mandalart/data/goal_repository.dart';
 import 'package:mandalart/data/mandalart_repository.dart';
@@ -69,23 +70,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// 만다라트별 달성률 계산
+  /// 만다라트별 달성률 계산 (25개 기준)
   Future<int> _calculateProgress(String mandalartId) async {
-    final goals = await _goalRepository.watchGoals(mandalartId).first;
-    if (goals.isEmpty) return 0;
+    final goalEntities = await _goalRepository.watchGoals(mandalartId).first;
+    if (goalEntities.isEmpty) return 0;
 
-    // 세부 과제 (인덱스가 서브/메인이 아닌 것들) 중 완료된 개수
-    const subIndices = [6, 8, 16, 18];
-    const mainIndex = 12;
-
-    final detailGoals = goals.where((g) {
-      return !subIndices.contains(g.gridIndex) && g.gridIndex != mainIndex;
+    // GoalEntity를 Goal로 변환
+    final goals = goalEntities.map((e) {
+      return Goal(
+        mandalartId: e.mandalartId,
+        gridIndex: e.gridIndex,
+        text: e.goalText,
+        status: GoalStatus.fromValue(e.status),
+        memo: e.memo ?? '',
+      );
     }).toList();
 
-    final doneCount = detailGoals.where((g) => g.status == 2).length;
-    const totalDetails = 20;
-
-    return ((doneCount / totalDetails) * 100).round();
+    return goals.progressPercent;
   }
 
   @override

@@ -26,6 +26,13 @@ class MandalartGrid extends StatelessWidget {
       goalMap[goal.gridIndex] = goal;
     }
 
+    // 영역별 완료 상태 미리 계산
+    final areaCompleted = <AreaId, bool>{};
+    for (final area in AreaId.values) {
+      areaCompleted[area] = goals.isAreaDetailsDone(area);
+    }
+    final isAllComplete = goals.allSubGoalsComplete;
+
     return AspectRatio(
       aspectRatio: 1,
       child: Padding(
@@ -45,8 +52,14 @@ class MandalartGrid extends StatelessWidget {
                   gridIndex: index,
                 );
 
+            // 이 셀이 속한 영역이 완료되었는지
+            final area = getAreaForIndex(index);
+            final isAreaComplete = area != null && (areaCompleted[area] ?? false);
+
             return MandalartCell(
               goal: goal,
+              isAreaComplete: isAreaComplete,
+              isAllComplete: isAllComplete,
               onTap: () => onCellTap(goal),
               onLongPress: () => onCellLongPress(goal),
             );

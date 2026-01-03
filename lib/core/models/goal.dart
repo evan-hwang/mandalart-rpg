@@ -91,20 +91,80 @@ class Goal {
 
 /// 달성률 계산 확장
 extension GoalListExtension on List<Goal> {
-  /// 세부 과제 중 완료된 개수
+  /// 인덱스로 Goal 찾기
+  Goal? goalAt(int index) {
+    try {
+      return firstWhere((g) => g.gridIndex == index);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 특정 영역의 세부 과제들이 모두 완료되었는지
+  bool isAreaDetailsDone(AreaId area) {
+    final detailIndices = kSubGoalDetailMapping[kAreaToSubIndex[area]!]!;
+    for (final idx in detailIndices) {
+      final goal = goalAt(idx);
+      if (goal == null || !goal.isDone) return false;
+    }
+    return true;
+  }
+
+  /// 특정 서브 과제가 완료되었는지 (세부 5개 모두 완료)
+  bool isSubGoalComplete(int subIndex) {
+    final detailIndices = kSubGoalDetailMapping[subIndex];
+    if (detailIndices == null) return false;
+    for (final idx in detailIndices) {
+      final goal = goalAt(idx);
+      if (goal == null || !goal.isDone) return false;
+    }
+    return true;
+  }
+
+  /// 모든 서브 과제가 완료되었는지
+  bool get allSubGoalsComplete {
+    for (final subIndex in kSubIndices) {
+      if (!isSubGoalComplete(subIndex)) return false;
+    }
+    return true;
+  }
+
+  /// 완료된 세부 과제 개수
   int get completedDetailCount {
     return where((g) => g.role == CellRole.detail && g.isDone).length;
   }
 
-  /// 전체 세부 과제 개수 (항상 20)
-  int get totalDetailCount => 20;
+  /// 완료된 서브 과제 개수
+  int get completedSubCount {
+    int count = 0;
+    for (final subIndex in kSubIndices) {
+      if (isSubGoalComplete(subIndex)) count++;
+    }
+    return count;
+  }
 
-  /// 달성률 (0.0 ~ 1.0)
+  /// 메인 완료 여부
+  bool get isMainComplete => allSubGoalsComplete;
+
+  /// 전체 완료 개수 (25개 기준: 20 detail + 4 sub + 1 main)
+  int get totalCompletedCount {
+    int count = completedDetailCount;
+    count += completedSubCount;
+    if (isMainComplete) count++;
+    return count;
+  }
+
+  /// 전체 개수 (항상 25)
+  int get totalCount => 25;
+
+  /// 달성률 (0.0 ~ 1.0) - 25개 기준
   double get progressRatio {
-    if (totalDetailCount == 0) return 0;
-    return completedDetailCount / totalDetailCount;
+    return totalCompletedCount / totalCount;
   }
 
   /// 달성률 퍼센트 (0 ~ 100)
   int get progressPercent => (progressRatio * 100).round();
+
+  /// 완료된 개수 (alias for UI) - 25개 기준
+  int get doneCount => totalCompletedCount;
 }

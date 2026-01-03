@@ -27,8 +27,13 @@ abstract final class AppColors {
   // 상태 컬러
   static const Color statusTodo = Color(0xFFFFFFFF);   // 기본 (흰색)
   static const Color statusDoing = Color(0xFFFEF3C7); // 진행 중 (노란색)
-  static const Color statusDone = Color(0xFFDCFCE7);  // 완료 (연초록)
+  static const Color statusDone = Color(0xFFBBF7D0);  // 완료 (선명한 연초록)
+  static const Color statusDoneBorder = Color(0xFF4ADE80); // 완료 테두리
   static const Color statusDoneCheck = Color(0xFF22C55E); // 체크마크
+
+  // 프로그레스 바
+  static const Color progressTrack = Color(0xFFE2E8F0);  // 빈 공간
+  static const Color progressFill = Color(0xFF4ADE80);   // 채워진 부분
 
   // 텍스트
   static const Color textPrimary = Color(0xFF0F172A);

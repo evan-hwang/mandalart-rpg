@@ -11,11 +11,15 @@ class MandalartCell extends StatelessWidget {
     required this.goal,
     required this.onTap,
     required this.onLongPress,
+    this.isAreaComplete = false,
+    this.isAllComplete = false,
   });
 
   final Goal goal;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final bool isAreaComplete; // 이 셀의 영역이 모두 완료됨
+  final bool isAllComplete;  // 모든 영역이 완료됨 (메인 완료)
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +32,8 @@ class MandalartCell extends StatelessWidget {
         onLongPress();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
         decoration: _buildDecoration(role),
         child: Stack(
           children: [
@@ -45,22 +50,27 @@ class MandalartCell extends StatelessWidget {
                 ),
               ),
             ),
-
-            // 완료 체크마크 (세부 과제만)
-            if (role == CellRole.detail && goal.isDone)
+            // 완료된 서브/메인에 체크 표시
+            if (_showCompleteBadge)
               Positioned(
-                right: 4,
-                bottom: 4,
+                right: 2,
+                top: 2,
                 child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: AppColors.statusDoneCheck,
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: _completeBadgeColor,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _completeBadgeColor.withValues(alpha: 0.4),
+                        blurRadius: 4,
+                      ),
+                    ],
                   ),
                   child: const Icon(
                     Icons.check,
-                    size: 12,
+                    size: 10,
                     color: Colors.white,
                   ),
                 ),
@@ -71,22 +81,58 @@ class MandalartCell extends StatelessWidget {
     );
   }
 
+  /// 완료 배지를 표시할지
+  bool get _showCompleteBadge {
+    if (goal.role == CellRole.sub && isAreaComplete) return true;
+    if (goal.role == CellRole.main && isAllComplete) return true;
+    return false;
+  }
+
+  /// 완료 배지 색상
+  Color get _completeBadgeColor {
+    if (isAllComplete) return const Color(0xFFFFD700); // 골드
+    return AppColors.statusDoneCheck; // 그린
+  }
+
   BoxDecoration _buildDecoration(CellRole role) {
     return switch (role) {
       CellRole.main => BoxDecoration(
-          color: AppColors.mainCell,
+          color: isAllComplete ? const Color(0xFF1E3A5F) : AppColors.mainCell,
           borderRadius: BorderRadius.circular(12),
+          border: isAllComplete
+              ? Border.all(color: const Color(0xFFFFD700), width: 2)
+              : null,
+          boxShadow: isAllComplete
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
         ),
       CellRole.sub => BoxDecoration(
-          color: AppColors.subCell,
+          color: isAreaComplete
+              ? const Color(0xFF22C55E) // 더 진한 초록
+              : AppColors.subCell,
           borderRadius: BorderRadius.circular(10),
+          boxShadow: isAreaComplete
+              ? [
+                  BoxShadow(
+                    color: AppColors.statusDoneCheck.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
         ),
       CellRole.detail => BoxDecoration(
           color: _detailCellColor(),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: AppColors.detailCellBorder,
-            width: 1,
+            color: _detailBorderColor(),
+            width: goal.isDone ? 2 : 1,
           ),
         ),
     };
@@ -100,16 +146,24 @@ class MandalartCell extends StatelessWidget {
     };
   }
 
+  Color _detailBorderColor() {
+    return switch (goal.status) {
+      GoalStatus.todo => AppColors.detailCellBorder,
+      GoalStatus.doing => Colors.amber.shade400,
+      GoalStatus.done => AppColors.statusDoneBorder,
+    };
+  }
+
   TextStyle _textStyle(CellRole role, bool isEmpty) {
     final baseStyle = switch (role) {
-      CellRole.main => const TextStyle(
-          color: AppColors.mainCellText,
+      CellRole.main => TextStyle(
+          color: isAllComplete ? const Color(0xFFFFD700) : AppColors.mainCellText,
           fontSize: 11,
           fontWeight: FontWeight.w700,
           height: 1.3,
         ),
-      CellRole.sub => const TextStyle(
-          color: AppColors.subCellText,
+      CellRole.sub => TextStyle(
+          color: isAreaComplete ? Colors.white : AppColors.subCellText,
           fontSize: 11,
           fontWeight: FontWeight.w600,
           height: 1.3,

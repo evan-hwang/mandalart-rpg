@@ -61,7 +61,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
     await _saveGoal(updatedGoal);
   }
 
-  /// 목표 저장
+  /// 목표 저장 + 자동 완료 체크
   Future<void> _saveGoal(Goal goal) async {
     await _repository.saveGoal(
       mandalartId: goal.mandalartId,
@@ -70,6 +70,53 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       status: goal.status.value,
       memo: goal.memo,
     );
+
+    // 세부 과제가 완료되면 자동 완료 체크
+    if (goal.role == CellRole.detail && goal.isDone) {
+      await _checkAutoComplete(goal.mandalartId);
+    }
+  }
+
+  /// 자동 완료 로직: 세부 5개 완료 → 서브 완료, 서브 4개 완료 → 메인 완료
+  Future<void> _checkAutoComplete(String mandalartId) async {
+    final entities = await _repository.watchGoals(mandalartId).first;
+    final goals = _mapEntitiesToGoals(entities);
+
+    // 각 서브 목표 체크
+    for (final subIndex in kSubIndices) {
+      if (goals.isSubGoalComplete(subIndex)) {
+        // 서브 목표의 현재 상태 확인
+        final subGoal = goals.goalAt(subIndex);
+        if (subGoal != null && !subGoal.isDone) {
+          // 서브 목표 자동 완료
+          await _repository.saveGoal(
+            mandalartId: mandalartId,
+            gridIndex: subIndex,
+            text: subGoal.text,
+            status: GoalStatus.done.value,
+            memo: subGoal.memo,
+          );
+        }
+      }
+    }
+
+    // 모든 서브 완료 시 메인 자동 완료
+    // 최신 상태 다시 조회
+    final updatedEntities = await _repository.watchGoals(mandalartId).first;
+    final updatedGoals = _mapEntitiesToGoals(updatedEntities);
+
+    if (updatedGoals.allSubGoalsComplete) {
+      final mainGoal = updatedGoals.goalAt(kMainIndex);
+      if (mainGoal != null && !mainGoal.isDone) {
+        await _repository.saveGoal(
+          mandalartId: mandalartId,
+          gridIndex: kMainIndex,
+          text: mainGoal.text,
+          status: GoalStatus.done.value,
+          memo: mainGoal.memo,
+        );
+      }
+    }
   }
 
   /// GoalEntity -> Goal 변환
@@ -92,13 +139,11 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         title: const Text('만다라트'),
-        actions: [
-          TextButton.icon(
-            onPressed: () => _goToHome(),
-            icon: const Icon(Icons.grid_view, size: 18),
-            label: const Text('목록'),
-          ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.grid_view),
+          tooltip: '만다라트 목록',
+          onPressed: () => _goToHome(),
+        ),
       ),
       body: StreamBuilder<List<GoalEntity>>(
         stream: _repository.watchGoals(widget.mandalart.id),

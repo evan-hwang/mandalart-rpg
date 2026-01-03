@@ -18,40 +18,50 @@ class _StartupScreenState extends State<StartupScreen> {
   @override
   void initState() {
     super.initState();
-    _initialize();
+    // 위젯 빌드 후 네비게이션 실행
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
   }
 
   Future<void> _initialize() async {
-    final prefs = await PreferencesService.getInstance();
-    final lastId = prefs.getLastMandalartId();
-
-    if (!mounted) return;
-
-    if (lastId != null) {
-      // 마지막 만다라트가 존재하는지 확인
-      final repo = MandalartRepository(appDatabase);
-      final mandalart = await repo.getMandalart(lastId);
+    try {
+      final prefs = await PreferencesService.getInstance();
+      final lastId = prefs.getLastMandalartId();
 
       if (!mounted) return;
 
-      if (mandalart != null) {
-        // 마지막 만다라트로 바로 이동
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MandalartDetailScreen(mandalart: mandalart),
-          ),
-        );
-        return;
-      }
-    }
+      if (lastId != null) {
+        // 마지막 만다라트가 존재하는지 확인
+        final repo = MandalartRepository(appDatabase);
+        final mandalart = await repo.getMandalart(lastId);
 
-    // 마지막 만다라트가 없으면 홈 화면으로
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+        if (!mounted) return;
+
+        if (mandalart != null) {
+          // 마지막 만다라트로 바로 이동
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MandalartDetailScreen(mandalart: mandalart),
+            ),
+          );
+          return;
+        }
+      }
+
+      // 마지막 만다라트가 없으면 홈 화면으로
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } catch (e) {
+      // 에러 발생 시 홈 화면으로
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    }
   }
 
   @override
