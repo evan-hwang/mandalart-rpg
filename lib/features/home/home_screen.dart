@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mandalart/data/db/app_database.dart';
+import 'package:mandalart/data/mandalart_repository.dart';
 import 'package:mandalart/features/mandalart/mandalart.dart';
 import 'package:mandalart/features/mandalart/mandalart_detail_screen.dart';
 
@@ -10,18 +12,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Mandalart> _mandalarts = [
-    const Mandalart(
-      id: '2025',
-      title: '2025 Mandalart',
-      dateRangeLabel: '2025.01.01 - 2025.12.31',
-    ),
-    const Mandalart(
-      id: '2024',
-      title: '2024 Mandalart',
-      dateRangeLabel: '2024.01.01 - 2024.12.31',
-    ),
-  ];
+  final MandalartRepository _repository = MandalartRepository(appDatabase);
 
   Future<void> _openMandalartEditor({Mandalart? existing}) async {
     final titleController = TextEditingController(text: existing?.title ?? '');
@@ -84,14 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    setState(() {
-      final index = _mandalarts.indexWhere((item) => item.id == result.id);
-      if (index >= 0) {
-        _mandalarts[index] = result;
-      } else {
-        _mandalarts.insert(0, result);
-      }
-    });
+    await _repository.saveMandalart(result);
   }
 
   @override
@@ -100,47 +84,58 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Mandalart'),
       ),
-      body: _mandalarts.isEmpty
-          ? const Center(child: Text('No Mandalart yet.'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: _mandalarts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final mandalart = _mandalarts[index];
+      body: StreamBuilder<List<Mandalart>>(
+        stream: _repository.watchMandalarts(),
+        builder: (context, snapshot) {
+          final mandalarts = snapshot.data ?? [];
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (mandalarts.isEmpty) {
+            return const Center(child: Text('No Mandalart yet.'));
+          }
 
-                return Dismissible(
-                  key: ValueKey(mandalart.id),
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    color: Colors.redAccent,
-                    child: const Icon(Icons.delete, color: Colors.white),
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: mandalarts.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final mandalart = mandalarts[index];
+
+              return Dismissible(
+                key: ValueKey(mandalart.id),
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  color: Colors.redAccent,
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                onDismissed: (_) {
+                  _repository.deleteMandalart(mandalart.id);
+                },
+                child: Card(
+                  child: ListTile(
+                    title: Text(mandalart.title),
+                    subtitle: Text(mandalart.dateRangeLabel),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              MandalartDetailScreen(mandalart: mandalart),
+                        ),
+                      );
+                    },
+                    onLongPress: () =>
+                        _openMandalartEditor(existing: mandalart),
                   ),
-                  onDismissed: (_) {
-                    setState(() {
-                      _mandalarts.removeAt(index);
-                    });
-                  },
-                  child: Card(
-                    child: ListTile(
-                      title: Text(mandalart.title),
-                      subtitle: Text(mandalart.dateRangeLabel),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                MandalartDetailScreen(mandalart: mandalart),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _openMandalartEditor,
         child: const Icon(Icons.add),
