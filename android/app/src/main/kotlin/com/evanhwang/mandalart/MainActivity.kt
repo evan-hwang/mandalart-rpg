@@ -1,4 +1,4 @@
-package com.example.mandalart
+package com.evanhwang.mandalart
 
 import io.flutter.embedding.android.FlutterActivity
 
