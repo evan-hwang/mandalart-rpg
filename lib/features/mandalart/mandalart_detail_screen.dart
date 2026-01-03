@@ -17,6 +17,13 @@ class _GoalCell {
   String memo;
 }
 
+enum _CellRole {
+  main,
+  core,
+  coreMirror,
+  sub,
+}
+
 class MandalartDetailScreen extends StatefulWidget {
   const MandalartDetailScreen({
     super.key,
@@ -35,6 +42,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
   Future<void> _openCellEditor({
     required int index,
     required _GoalCell cell,
+    required _CellRole role,
   }) async {
     final textController = TextEditingController(text: cell.text);
     final memoController = TextEditingController(text: cell.memo);
@@ -44,7 +52,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('목표 편집'),
+          title: Text(_editorTitle(role)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -115,6 +123,17 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       status: result.status.index,
       memo: result.memo,
     );
+
+    final pairedIndex = _pairedCoreIndex(index, role);
+    if (pairedIndex != null) {
+      await _repository.saveGoal(
+        mandalartId: widget.mandalart.id,
+        gridIndex: pairedIndex,
+        text: result.text,
+        status: result.status.index,
+        memo: result.memo,
+      );
+    }
   }
 
   Color _statusColor(GoalStatus status) {
@@ -131,12 +150,75 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
   static String _statusLabel(GoalStatus status) {
     switch (status) {
       case GoalStatus.todo:
-        return 'TODO';
+        return '할 일';
       case GoalStatus.doing:
-        return 'DOING';
+        return '진행 중';
       case GoalStatus.done:
-        return 'DONE';
+        return '완료';
     }
+  }
+
+  static String _editorTitle(_CellRole role) {
+    switch (role) {
+      case _CellRole.main:
+        return '중앙 목표';
+      case _CellRole.core:
+      case _CellRole.coreMirror:
+        return '핵심 목표';
+      case _CellRole.sub:
+        return '세부 목표';
+    }
+  }
+
+  static _CellRole _roleForIndex(int index) {
+    final row = index ~/ 9;
+    final col = index % 9;
+    final blockRow = row ~/ 3;
+    final blockCol = col ~/ 3;
+    final inCenterBlock = blockRow == 1 && blockCol == 1;
+    final isBlockCenter = row % 3 == 1 && col % 3 == 1;
+
+    if (inCenterBlock && row == 4 && col == 4) {
+      return _CellRole.main;
+    }
+    if (inCenterBlock) {
+      return _CellRole.core;
+    }
+    if (isBlockCenter) {
+      return _CellRole.coreMirror;
+    }
+    return _CellRole.sub;
+  }
+
+  static int? _pairedCoreIndex(int index, _CellRole role) {
+    if (role != _CellRole.core && role != _CellRole.coreMirror) {
+      return null;
+    }
+    final row = index ~/ 9;
+    final col = index % 9;
+    final blockRow = row ~/ 3;
+    final blockCol = col ~/ 3;
+
+    if (role == _CellRole.core) {
+      final targetRow = blockRow * 3 + 1;
+      final targetCol = blockCol * 3 + 1;
+      return targetRow * 9 + targetCol;
+    }
+
+    final targetRow = 3 + blockRow;
+    final targetCol = 3 + blockCol;
+    return targetRow * 9 + targetCol;
+  }
+
+  static _GoalCell _emptyCell() {
+    return _GoalCell(text: '', status: GoalStatus.todo, memo: '');
+  }
+
+  static _GoalCell _mergeCoreCells(_GoalCell primary, _GoalCell secondary) {
+    if (primary.text.isNotEmpty || primary.memo.isNotEmpty) {
+      return primary;
+    }
+    return secondary;
   }
 
   @override
@@ -149,18 +231,18 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
         stream: _repository.watchGoals(widget.mandalart.id),
         builder: (context, snapshot) {
           final rows = snapshot.data ?? [];
-          final cells = List.generate(
-            81,
-            (_) => _GoalCell(text: '', status: GoalStatus.todo, memo: ''),
-          );
+          final cells = List.generate(81, (_) => _emptyCell());
+          final cellsByIndex = <int, _GoalCell>{};
 
           for (final row in rows) {
             if (row.gridIndex >= 0 && row.gridIndex < cells.length) {
-              cells[row.gridIndex] = _GoalCell(
+              final cell = _GoalCell(
                 text: row.goalText,
                 status: GoalStatus.values[row.status],
                 memo: row.memo ?? '',
               );
+              cells[row.gridIndex] = cell;
+              cellsByIndex[row.gridIndex] = cell;
             }
           }
 
@@ -176,9 +258,22 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
                 ),
                 itemCount: cells.length,
                 itemBuilder: (context, index) {
-                  final cell = cells[index];
+                  final role = _roleForIndex(index);
+                  var cell = cells[index];
+                  final pairedIndex = _pairedCoreIndex(index, role);
+                  if (pairedIndex != null) {
+                    cell = _mergeCoreCells(
+                      cell,
+                      cellsByIndex[pairedIndex] ?? _emptyCell(),
+                    );
+                  }
+
                   return InkWell(
-                    onTap: () => _openCellEditor(index: index, cell: cell),
+                    onTap: () => _openCellEditor(
+                      index: index,
+                      cell: cell,
+                      role: role,
+                    ),
                     onLongPress: () {
                       final nextStatus = GoalStatus
                           .values[(cell.status.index + 1) % GoalStatus.values.length];
@@ -189,18 +284,33 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
                         status: nextStatus.index,
                         memo: cell.memo,
                       );
+                      if (pairedIndex != null) {
+                        _repository.saveGoal(
+                          mandalartId: widget.mandalart.id,
+                          gridIndex: pairedIndex,
+                          text: cell.text,
+                          status: nextStatus.index,
+                          memo: cell.memo,
+                        );
+                      }
                     },
                     child: Container(
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black12),
-                        color: _statusColor(cell.status),
+                        border: Border.all(
+                          color: Colors.black12,
+                          width: _borderWidth(index),
+                        ),
+                        color: _cellBackground(role, cell.status),
                       ),
                       padding: const EdgeInsets.all(4),
                       child: Text(
                         cell.text.isEmpty ? '${index + 1}' : cell.text,
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(fontWeight: _cellWeight(role)),
                       ),
                     ),
                   );
@@ -211,5 +321,41 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
         },
       ),
     );
+  }
+
+  double _borderWidth(int index) {
+    final row = index ~/ 9;
+    final col = index % 9;
+    final thickRow = row == 2 || row == 5;
+    final thickCol = col == 2 || col == 5;
+    if (thickRow || thickCol) {
+      return 1.8;
+    }
+    return 0.6;
+  }
+
+  Color _cellBackground(_CellRole role, GoalStatus status) {
+    final base = _statusColor(status);
+    switch (role) {
+      case _CellRole.main:
+        return Colors.blueGrey.shade100;
+      case _CellRole.core:
+      case _CellRole.coreMirror:
+        return Colors.blueGrey.shade50.withAlpha(230);
+      case _CellRole.sub:
+        return base;
+    }
+  }
+
+  FontWeight _cellWeight(_CellRole role) {
+    switch (role) {
+      case _CellRole.main:
+        return FontWeight.w700;
+      case _CellRole.core:
+      case _CellRole.coreMirror:
+        return FontWeight.w600;
+      case _CellRole.sub:
+        return FontWeight.w400;
+    }
   }
 }
