@@ -24,25 +24,25 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(existing == null ? 'New Mandalart' : 'Edit Mandalart'),
+          title: Text(existing == null ? '만다라트 만들기' : '만다라트 수정'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration: const InputDecoration(labelText: '제목'),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: rangeController,
-                decoration: const InputDecoration(labelText: 'Date range'),
+                decoration: const InputDecoration(labelText: '기간'),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('취소'),
             ),
             FilledButton(
               onPressed: () {
@@ -57,11 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     id: existing?.id ??
                         DateTime.now().millisecondsSinceEpoch.toString(),
                     title: title,
-                    dateRangeLabel: range.isEmpty ? 'No date range' : range,
+                    dateRangeLabel: range.isEmpty ? '기간 없음' : range,
                   ),
                 );
               },
-              child: const Text('Save'),
+              child: const Text('저장'),
             ),
           ],
         );
@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mandalart'),
+        title: const Text('만다라트'),
       ),
       body: StreamBuilder<List<Mandalart>>(
         stream: _repository.watchMandalarts(),
@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (mandalarts.isEmpty) {
-            return const Center(child: Text('No Mandalart yet.'));
+            return const Center(child: Text('아직 만다라트가 없어요.'));
           }
 
           return ListView.separated(
@@ -115,9 +115,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 child: Card(
                   child: ListTile(
-                    title: Text(mandalart.title),
-                    subtitle: Text(mandalart.dateRangeLabel),
-                    trailing: const Icon(Icons.chevron_right),
+                      title: Text(mandalart.title),
+                      subtitle: Text(mandalart.dateRangeLabel),
+                      trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       Navigator.push(
                         context,
