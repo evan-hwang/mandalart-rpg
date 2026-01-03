@@ -1,28 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:mandalart/core/constants/app_colors.dart';
+import 'package:mandalart/core/constants/grid_constants.dart';
+import 'package:mandalart/core/models/goal.dart';
+import 'package:mandalart/core/services/preferences_service.dart';
 import 'package:mandalart/data/db/app_database.dart';
 import 'package:mandalart/data/goal_repository.dart';
+import 'package:mandalart/data/mandalart_repository.dart';
+import 'package:mandalart/features/home/home_screen.dart';
 import 'package:mandalart/features/mandalart/mandalart.dart';
-
-enum GoalStatus { todo, doing, done }
-
-class _GoalCell {
-  _GoalCell({
-    required this.text,
-    required this.status,
-    required this.memo,
-  });
-
-  String text;
-  GoalStatus status;
-  String memo;
-}
-
-enum _CellRole {
-  main,
-  core,
-  coreMirror,
-  sub,
-}
+import 'package:mandalart/features/mandalart/widgets/goal_edit_sheet.dart';
+import 'package:mandalart/features/mandalart/widgets/mandalart_grid.dart';
+import 'package:mandalart/features/mandalart/widgets/mandalart_header.dart';
 
 class MandalartDetailScreen extends StatefulWidget {
   const MandalartDetailScreen({
@@ -38,324 +26,214 @@ class MandalartDetailScreen extends StatefulWidget {
 
 class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
   final GoalRepository _repository = GoalRepository(appDatabase);
+  final MandalartRepository _mandalartRepository = MandalartRepository(appDatabase);
 
-  Future<void> _openCellEditor({
-    required int index,
-    required _GoalCell cell,
-    required _CellRole role,
-  }) async {
-    final textController = TextEditingController(text: cell.text);
-    final memoController = TextEditingController(text: cell.memo);
-    var selectedStatus = cell.status;
+  @override
+  void initState() {
+    super.initState();
+    _saveLastMandalartId();
+  }
 
-    final result = await showDialog<_GoalCell>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(_editorTitle(role)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: textController,
-                decoration: const InputDecoration(labelText: '목표'),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<GoalStatus>(
-                value: selectedStatus,
-                decoration: const InputDecoration(labelText: '상태'),
-                items: GoalStatus.values
-                    .map(
-                      (status) => DropdownMenuItem(
-                        value: status,
-                        child: Text(_statusLabel(status)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    selectedStatus = value;
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: memoController,
-                decoration: const InputDecoration(labelText: '회고'),
-                maxLines: 3,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('취소'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  _GoalCell(
-                    text: textController.text.trim(),
-                    status: selectedStatus,
-                    memo: memoController.text.trim(),
-                  ),
-                );
-              },
-              child: const Text('저장'),
-            ),
-          ],
-        );
-      },
-    );
+  /// 마지막 만다라트 ID 저장
+  Future<void> _saveLastMandalartId() async {
+    final prefs = await PreferencesService.getInstance();
+    await prefs.setLastMandalartId(widget.mandalart.id);
+  }
 
-    textController.dispose();
-    memoController.dispose();
+  /// 셀 탭 - 편집 시트 열기
+  Future<void> _onCellTap(Goal goal) async {
+    final updatedGoal = await GoalEditSheet.show(context, goal);
+    if (updatedGoal == null) return;
 
-    if (result == null) {
+    await _saveGoal(updatedGoal);
+  }
+
+  /// 셀 롱프레스 - 상태 토글
+  Future<void> _onCellLongPress(Goal goal) async {
+    // 세부 과제만 상태 토글 가능
+    if (goal.role != CellRole.detail) {
+      _onCellTap(goal);
       return;
     }
 
+    final nextStatus = goal.status.next;
+    final updatedGoal = goal.copyWith(status: nextStatus);
+    await _saveGoal(updatedGoal);
+  }
+
+  /// 목표 저장
+  Future<void> _saveGoal(Goal goal) async {
     await _repository.saveGoal(
-      mandalartId: widget.mandalart.id,
-      gridIndex: index,
-      text: result.text,
-      status: result.status.index,
-      memo: result.memo,
+      mandalartId: goal.mandalartId,
+      gridIndex: goal.gridIndex,
+      text: goal.text,
+      status: goal.status.value,
+      memo: goal.memo,
     );
+  }
 
-    final pairedIndex = _pairedCoreIndex(index, role);
-    if (pairedIndex != null) {
-      await _repository.saveGoal(
-        mandalartId: widget.mandalart.id,
-        gridIndex: pairedIndex,
-        text: result.text,
-        status: result.status.index,
-        memo: result.memo,
+  /// GoalEntity -> Goal 변환
+  List<Goal> _mapEntitiesToGoals(List<GoalEntity> entities) {
+    return entities.map((e) {
+      return Goal(
+        mandalartId: e.mandalartId,
+        gridIndex: e.gridIndex,
+        text: e.goalText,
+        status: GoalStatus.fromValue(e.status),
+        memo: e.memo ?? '',
       );
-    }
-  }
-
-  Color _statusColor(GoalStatus status) {
-    switch (status) {
-      case GoalStatus.todo:
-        return Colors.grey.shade200;
-      case GoalStatus.doing:
-        return Colors.amber.shade100;
-      case GoalStatus.done:
-        return Colors.green.shade200;
-    }
-  }
-
-  static String _statusLabel(GoalStatus status) {
-    switch (status) {
-      case GoalStatus.todo:
-        return '할 일';
-      case GoalStatus.doing:
-        return '진행 중';
-      case GoalStatus.done:
-        return '완료';
-    }
-  }
-
-  static String _editorTitle(_CellRole role) {
-    switch (role) {
-      case _CellRole.main:
-        return '중앙 목표';
-      case _CellRole.core:
-      case _CellRole.coreMirror:
-        return '핵심 목표';
-      case _CellRole.sub:
-        return '세부 목표';
-    }
-  }
-
-  static _CellRole _roleForIndex(int index) {
-    final row = index ~/ 9;
-    final col = index % 9;
-    final blockRow = row ~/ 3;
-    final blockCol = col ~/ 3;
-    final inCenterBlock = blockRow == 1 && blockCol == 1;
-    final isBlockCenter = row % 3 == 1 && col % 3 == 1;
-
-    if (inCenterBlock && row == 4 && col == 4) {
-      return _CellRole.main;
-    }
-    if (inCenterBlock) {
-      return _CellRole.core;
-    }
-    if (isBlockCenter) {
-      return _CellRole.coreMirror;
-    }
-    return _CellRole.sub;
-  }
-
-  static int? _pairedCoreIndex(int index, _CellRole role) {
-    if (role != _CellRole.core && role != _CellRole.coreMirror) {
-      return null;
-    }
-    final row = index ~/ 9;
-    final col = index % 9;
-    final blockRow = row ~/ 3;
-    final blockCol = col ~/ 3;
-
-    if (role == _CellRole.core) {
-      final targetRow = blockRow * 3 + 1;
-      final targetCol = blockCol * 3 + 1;
-      return targetRow * 9 + targetCol;
-    }
-
-    final targetRow = 3 + blockRow;
-    final targetCol = 3 + blockCol;
-    return targetRow * 9 + targetCol;
-  }
-
-  static _GoalCell _emptyCell() {
-    return _GoalCell(text: '', status: GoalStatus.todo, memo: '');
-  }
-
-  static _GoalCell _mergeCoreCells(_GoalCell primary, _GoalCell secondary) {
-    if (primary.text.isNotEmpty || primary.memo.isNotEmpty) {
-      return primary;
-    }
-    return secondary;
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: Text(widget.mandalart.title),
+        backgroundColor: AppColors.surface,
+        title: const Text('만다라트'),
+        actions: [
+          TextButton.icon(
+            onPressed: () => _goToHome(),
+            icon: const Icon(Icons.grid_view, size: 18),
+            label: const Text('목록'),
+          ),
+        ],
       ),
       body: StreamBuilder<List<GoalEntity>>(
         stream: _repository.watchGoals(widget.mandalart.id),
         builder: (context, snapshot) {
-          final rows = snapshot.data ?? [];
-          final cells = List.generate(81, (_) => _emptyCell());
-          final cellsByIndex = <int, _GoalCell>{};
+          final goals = snapshot.hasData
+              ? _mapEntitiesToGoals(snapshot.data!)
+              : <Goal>[];
 
-          for (final row in rows) {
-            if (row.gridIndex >= 0 && row.gridIndex < cells.length) {
-              final cell = _GoalCell(
-                text: row.goalText,
-                status: GoalStatus.values[row.status],
-                memo: row.memo ?? '',
-              );
-              cells[row.gridIndex] = cell;
-              cellsByIndex[row.gridIndex] = cell;
-            }
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 9,
-                  crossAxisSpacing: 2,
-                  mainAxisSpacing: 2,
-                ),
-                itemCount: cells.length,
-                itemBuilder: (context, index) {
-                  final role = _roleForIndex(index);
-                  var cell = cells[index];
-                  final pairedIndex = _pairedCoreIndex(index, role);
-                  if (pairedIndex != null) {
-                    cell = _mergeCoreCells(
-                      cell,
-                      cellsByIndex[pairedIndex] ?? _emptyCell(),
-                    );
-                  }
-
-                  return InkWell(
-                    onTap: () => _openCellEditor(
-                      index: index,
-                      cell: cell,
-                      role: role,
-                    ),
-                    onLongPress: () {
-                      final nextStatus = GoalStatus
-                          .values[(cell.status.index + 1) % GoalStatus.values.length];
-                      _repository.saveGoal(
-                        mandalartId: widget.mandalart.id,
-                        gridIndex: index,
-                        text: cell.text,
-                        status: nextStatus.index,
-                        memo: cell.memo,
-                      );
-                      if (pairedIndex != null) {
-                        _repository.saveGoal(
-                          mandalartId: widget.mandalart.id,
-                          gridIndex: pairedIndex,
-                          text: cell.text,
-                          status: nextStatus.index,
-                          memo: cell.memo,
-                        );
-                      }
-                    },
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.black12,
-                          width: _borderWidth(index),
-                        ),
-                        color: _cellBackground(role, cell.status),
-                      ),
-                      padding: const EdgeInsets.all(4),
-                      child: Text(
-                        cell.text.isEmpty ? '${index + 1}' : cell.text,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(fontWeight: _cellWeight(role)),
-                      ),
-                    ),
-                  );
-                },
+          return Column(
+            children: [
+              // 헤더 (이모지, 제목, 달성률, 기한)
+              MandalartHeader(
+                title: widget.mandalart.title,
+                emoji: null, // TODO: 이모지 필드 추가 후 연결
+                deadline: widget.mandalart.dateRangeLabel,
+                goals: goals,
+                onMenuTap: () => _showMandalartOptions(context),
               ),
-            ),
+
+              // 5x5 그리드
+              Expanded(
+                child: Center(
+                  child: MandalartGrid(
+                    goals: goals,
+                    mandalartId: widget.mandalart.id,
+                    onCellTap: _onCellTap,
+                    onCellLongPress: _onCellLongPress,
+                  ),
+                ),
+              ),
+
+              // 하단 공유 버튼
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        // TODO: 공유 기능 구현
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('공유 기능은 준비 중입니다')),
+                        );
+                      },
+                      icon: const Icon(Icons.share_outlined, size: 18),
+                      label: const Text('공유하기'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textSecondary,
+                        side: const BorderSide(color: AppColors.divider),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  double _borderWidth(int index) {
-    final row = index ~/ 9;
-    final col = index % 9;
-    final thickRow = row == 2 || row == 5;
-    final thickCol = col == 2 || col == 5;
-    if (thickRow || thickCol) {
-      return 1.8;
-    }
-    return 0.6;
+  /// 홈 화면으로 이동
+  void _goToHome() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
   }
 
-  Color _cellBackground(_CellRole role, GoalStatus status) {
-    final base = _statusColor(status);
-    switch (role) {
-      case _CellRole.main:
-        return Colors.blueGrey.shade100;
-      case _CellRole.core:
-      case _CellRole.coreMirror:
-        return Colors.blueGrey.shade50.withAlpha(230);
-      case _CellRole.sub:
-        return base;
+  /// 만다라트 삭제
+  Future<void> _deleteMandalart() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('만다라트 삭제'),
+        content: Text(
+          '"${widget.mandalart.title}"을(를) 삭제하시겠습니까?\n모든 목표도 함께 삭제됩니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // 마지막 만다라트 ID 삭제
+      final prefs = await PreferencesService.getInstance();
+      await prefs.clearLastMandalartId();
+      // 만다라트 삭제
+      await _mandalartRepository.deleteMandalart(widget.mandalart.id);
+      // 홈 화면으로 이동
+      if (mounted) _goToHome();
     }
   }
 
-  FontWeight _cellWeight(_CellRole role) {
-    switch (role) {
-      case _CellRole.main:
-        return FontWeight.w700;
-      case _CellRole.core:
-      case _CellRole.coreMirror:
-        return FontWeight.w600;
-      case _CellRole.sub:
-        return FontWeight.w400;
-    }
+  void _showMandalartOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('만다라트 수정'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: 수정 기능
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                title: const Text('삭제', style: TextStyle(color: AppColors.error)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _deleteMandalart();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

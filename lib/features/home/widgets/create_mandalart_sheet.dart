@@ -1,0 +1,166 @@
+import 'package:flutter/material.dart';
+import 'package:mandalart/core/constants/app_colors.dart';
+import 'package:mandalart/features/mandalart/mandalart.dart';
+
+/// 만다라트 생성/수정 바텀시트
+class CreateMandalartSheet extends StatefulWidget {
+  const CreateMandalartSheet({
+    super.key,
+    this.existing,
+  });
+
+  final Mandalart? existing;
+
+  static Future<Mandalart?> show(BuildContext context, {Mandalart? existing}) {
+    return showModalBottomSheet<Mandalart>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CreateMandalartSheet(existing: existing),
+    );
+  }
+
+  @override
+  State<CreateMandalartSheet> createState() => _CreateMandalartSheetState();
+}
+
+class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
+  late final TextEditingController _titleController;
+  late final TextEditingController _deadlineController;
+
+  bool get _isEditing => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.existing?.title ?? '');
+    _deadlineController = TextEditingController(
+      text: widget.existing?.dateRangeLabel ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _deadlineController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('제목을 입력해주세요')),
+      );
+      return;
+    }
+
+    final deadline = _deadlineController.text.trim();
+    final mandalart = Mandalart(
+      id: widget.existing?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      title: title,
+      dateRangeLabel: deadline.isEmpty ? '기간 없음' : deadline,
+    );
+
+    Navigator.pop(context, mandalart);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 드래그 핸들
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 제목
+              Text(
+                _isEditing ? '만다라트 수정' : '새 만다라트 만들기',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '목표를 설정하고 25칸에 담아보세요',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 제목 입력
+              TextField(
+                controller: _titleController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: '만다라트 제목',
+                  hintText: '예: 2025년 목표, 발전하는 나',
+                ),
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: 16),
+
+              // 기간 입력
+              TextField(
+                controller: _deadlineController,
+                decoration: const InputDecoration(
+                  labelText: '목표 기간 (선택)',
+                  hintText: '예: ~25년 12월 31일',
+                ),
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _save(),
+              ),
+              const SizedBox(height: 24),
+
+              // 버튼
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('취소'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: _save,
+                      child: Text(_isEditing ? '저장' : '만들기'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

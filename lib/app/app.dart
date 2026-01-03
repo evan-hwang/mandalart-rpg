@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mandalart/app/theme.dart';
-import 'package:mandalart/features/home/home_screen.dart';
+import 'package:mandalart/core/theme/app_theme.dart';
+import 'package:mandalart/features/startup/startup_screen.dart';
 
 class MandalartApp extends StatelessWidget {
   const MandalartApp({super.key});
@@ -9,8 +9,11 @@ class MandalartApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Mandalart',
-      theme: buildAppTheme(),
-      home: const HomeScreen(),
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.light,
+      home: const StartupScreen(),
     );
   }
 }

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:mandalart/core/constants/app_colors.dart';
 import 'package:mandalart/data/db/app_database.dart';
+import 'package:mandalart/data/goal_repository.dart';
 import 'package:mandalart/data/mandalart_repository.dart';
+import 'package:mandalart/features/home/widgets/create_mandalart_sheet.dart';
+import 'package:mandalart/features/home/widgets/mandalart_card.dart';
 import 'package:mandalart/features/mandalart/mandalart.dart';
 import 'package:mandalart/features/mandalart/mandalart_detail_screen.dart';
 
@@ -12,133 +16,206 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final MandalartRepository _repository = MandalartRepository(appDatabase);
+  final MandalartRepository _mandalartRepository = MandalartRepository(appDatabase);
+  final GoalRepository _goalRepository = GoalRepository(appDatabase);
 
-  Future<void> _openMandalartEditor({Mandalart? existing}) async {
-    final titleController = TextEditingController(text: existing?.title ?? '');
-    final rangeController = TextEditingController(
-      text: existing?.dateRangeLabel ?? '',
-    );
-
-    final result = await showDialog<Mandalart>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(existing == null ? '만다라트 만들기' : '만다라트 수정'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: '제목'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: rangeController,
-                decoration: const InputDecoration(labelText: '기간'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('취소'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final title = titleController.text.trim();
-                final range = rangeController.text.trim();
-                if (title.isEmpty) {
-                  return;
-                }
-                Navigator.pop(
-                  context,
-                  Mandalart(
-                    id: existing?.id ??
-                        DateTime.now().millisecondsSinceEpoch.toString(),
-                    title: title,
-                    dateRangeLabel: range.isEmpty ? '기간 없음' : range,
-                  ),
-                );
-              },
-              child: const Text('저장'),
-            ),
-          ],
-        );
-      },
-    );
-
-    titleController.dispose();
-    rangeController.dispose();
-
-    if (result == null) {
-      return;
+  Future<void> _createMandalart() async {
+    final result = await CreateMandalartSheet.show(context);
+    if (result != null) {
+      await _mandalartRepository.saveMandalart(result);
     }
+  }
 
-    await _repository.saveMandalart(result);
+  Future<void> _editMandalart(Mandalart mandalart) async {
+    final result = await CreateMandalartSheet.show(context, existing: mandalart);
+    if (result != null) {
+      await _mandalartRepository.saveMandalart(result);
+    }
+  }
+
+  Future<void> _deleteMandalart(Mandalart mandalart) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('만다라트 삭제'),
+        content: Text('"${mandalart.title}"을(를) 삭제하시겠습니까?\n모든 목표도 함께 삭제됩니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _mandalartRepository.deleteMandalart(mandalart.id);
+    }
+  }
+
+  void _openMandalart(Mandalart mandalart) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MandalartDetailScreen(mandalart: mandalart),
+      ),
+    );
+  }
+
+  /// 만다라트별 달성률 계산
+  Future<int> _calculateProgress(String mandalartId) async {
+    final goals = await _goalRepository.watchGoals(mandalartId).first;
+    if (goals.isEmpty) return 0;
+
+    // 세부 과제 (인덱스가 서브/메인이 아닌 것들) 중 완료된 개수
+    const subIndices = [6, 8, 16, 18];
+    const mainIndex = 12;
+
+    final detailGoals = goals.where((g) {
+      return !subIndices.contains(g.gridIndex) && g.gridIndex != mainIndex;
+    }).toList();
+
+    final doneCount = detailGoals.where((g) => g.status == 2).length;
+    const totalDetails = 20;
+
+    return ((doneCount / totalDetails) * 100).round();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: AppColors.background,
         title: const Text('만다라트'),
       ),
       body: StreamBuilder<List<Mandalart>>(
-        stream: _repository.watchMandalarts(),
+        stream: _mandalartRepository.watchMandalarts(),
         builder: (context, snapshot) {
-          final mandalarts = snapshot.data ?? [];
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          final mandalarts = snapshot.data ?? [];
+
           if (mandalarts.isEmpty) {
-            return const Center(child: Text('아직 만다라트가 없어요.'));
+            return _EmptyState(onCreate: _createMandalart);
           }
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: mandalarts.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final mandalart = mandalarts[index];
 
-              return Dismissible(
-                key: ValueKey(mandalart.id),
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  color: Colors.redAccent,
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                onDismissed: (_) {
-                  _repository.deleteMandalart(mandalart.id);
-                },
-                child: Card(
-                  child: ListTile(
-                      title: Text(mandalart.title),
-                      subtitle: Text(mandalart.dateRangeLabel),
-                      trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              MandalartDetailScreen(mandalart: mandalart),
-                        ),
-                      );
+              return FutureBuilder<int>(
+                future: _calculateProgress(mandalart.id),
+                builder: (context, progressSnapshot) {
+                  final progress = progressSnapshot.data ?? 0;
+
+                  return Dismissible(
+                    key: ValueKey(mandalart.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.white,
+                      ),
+                    ),
+                    confirmDismiss: (_) async {
+                      await _deleteMandalart(mandalart);
+                      return false; // 직접 삭제 처리하므로 false 반환
                     },
-                    onLongPress: () =>
-                        _openMandalartEditor(existing: mandalart),
-                  ),
-                ),
+                    child: MandalartCard(
+                      mandalart: mandalart,
+                      progressPercent: progress,
+                      onTap: () => _openMandalart(mandalart),
+                      onLongPress: () => _editMandalart(mandalart),
+                    ),
+                  );
+                },
               );
             },
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openMandalartEditor,
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _createMandalart,
+        icon: const Icon(Icons.add),
+        label: const Text('만들기'),
+      ),
+    );
+  }
+}
+
+/// 빈 상태 위젯
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.onCreate});
+
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.grid_view_rounded,
+                size: 40,
+                color: AppColors.textTertiary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              '아직 만다라트가 없어요',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '꿈을 향한 여정을\n25칸에 담아보세요',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: onCreate,
+              icon: const Icon(Icons.add),
+              label: const Text('첫 만다라트 만들기'),
+            ),
+          ],
+        ),
       ),
     );
   }

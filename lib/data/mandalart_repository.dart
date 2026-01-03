@@ -53,4 +53,19 @@ class MandalartRepository {
           ..where((row) => row.id.equals(id)))
         .go();
   }
+
+  /// 특정 만다라트 조회
+  Future<Mandalart?> getMandalart(String id) async {
+    final query = _database.select(_database.mandalarts)
+      ..where((row) => row.id.equals(id));
+    final row = await query.getSingleOrNull();
+
+    if (row == null) return null;
+
+    return Mandalart(
+      id: row.id,
+      title: row.title,
+      dateRangeLabel: row.dateRangeLabel,
+    );
+  }
 }
