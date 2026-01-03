@@ -243,6 +243,7 @@ double calculateProgress(List<GoalEntity> goals) {
 - [x] **달성률 계산 및 표시**
 - [x] **UI 디자인 개선 (이미지 참고)**
 - [x] **마지막 선택 만다라트 자동 로드**
+- [x] **4개 서브 영역 시각적 구분 (독립 배치, 균일 베젤)**
 
 ### Release 2: UX & 시각화
 #### TODO

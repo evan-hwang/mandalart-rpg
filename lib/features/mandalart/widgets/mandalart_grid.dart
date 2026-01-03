@@ -72,12 +72,12 @@ class MandalartGrid extends StatelessWidget {
           final brX = rightAreaW + areaGap; // BL 너비 + 간격
           final brY = topRightH + areaGap; // TR 높이 + 간격
 
-          // 메인 셀 위치 (BR col 2와 같은 X, BL row 0과 같은 Y)
-          final mainX = brX + bezel; // BR 첫 셀과 같은 X
-          final mainY = blY + bezel; // BL 첫 셀과 같은 Y
-
           // 총 높이 (왼쪽 기준)
           final gridHeight = topLeftH + areaGap + bottomLeftH;
+
+          // 메인 셀 위치 (그리드 정중앙)
+          final mainX = (gridWidth - cellSize) / 2;
+          final mainY = (gridHeight - cellSize) / 2;
 
           // 각 셀의 절대 위치를 영역별로 계산
           Map<int, Offset> cellPositions = {};

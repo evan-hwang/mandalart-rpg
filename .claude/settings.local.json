@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs cat:*)",
+      "Bash(tree:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(fvm flutter analyze:*)",
+      "Bash(/Users/evanhwang/fvm/default/bin/flutter analyze:*)",
+      "Bash(cat:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter devices:*)",
+      "Bash(open -a Simulator)",
+      "Bash(flutter doctor:*)",
+      "Bash(flutter build:*)",
+      "Bash(mas version:*)",
+      "Bash(brew install:*)",
+      "Bash(mas search:*)",
+      "Bash(sudo xcode-select:*)",
+      "Bash(sudo xcodebuild:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: implement Release 1 - Core MVP with 5x5 grid\n\n- Refactor 9x9 grid to 5x5 structure (1 main, 4 sub, 20 detail goals)\n- Add modular widget architecture (MandalartCell, GoalEditSheet, etc.)\n- Implement Material 3 theme with custom color palette\n- Add preferences service for last mandalart auto-load on startup\n- Update home screen with progress tracking and improved UX\n- Add goal status management (todo/doing/done)\n- Implement delete mandalart functionality\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "WebFetch(domain:dribbble.com)",
+      "WebFetch(domain:apps.apple.com)",
+      "Bash(git checkout:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
