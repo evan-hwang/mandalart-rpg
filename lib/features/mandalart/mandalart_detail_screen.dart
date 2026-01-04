@@ -11,6 +11,7 @@ import 'package:mandalart/data/db/app_database.dart';
 import 'package:mandalart/data/goal_repository.dart';
 import 'package:mandalart/data/mandalart_repository.dart';
 import 'package:mandalart/features/home/home_screen.dart';
+import 'package:mandalart/features/home/widgets/create_mandalart_sheet.dart';
 import 'package:mandalart/features/mandalart/mandalart.dart';
 import 'package:mandalart/features/mandalart/widgets/goal_edit_sheet.dart';
 import 'package:mandalart/features/mandalart/widgets/mandalart_grid.dart';
@@ -38,17 +39,30 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
   final ScreenshotController _screenshotController = ScreenshotController();
 
   List<Goal> _currentGoals = [];
+  late Mandalart _mandalart;
 
   @override
   void initState() {
     super.initState();
+    _mandalart = widget.mandalart;
     _saveLastMandalartId();
   }
 
   /// 마지막 만다라트 ID 저장
   Future<void> _saveLastMandalartId() async {
     final prefs = await PreferencesService.getInstance();
-    await prefs.setLastMandalartId(widget.mandalart.id);
+    await prefs.setLastMandalartId(_mandalart.id);
+  }
+
+  /// 만다라트 수정
+  Future<void> _editMandalart() async {
+    final result = await CreateMandalartSheet.show(context, existing: _mandalart);
+    if (result != null) {
+      await _mandalartRepository.saveMandalart(result);
+      setState(() {
+        _mandalart = result;
+      });
+    }
   }
 
   /// 셀 탭 - 편집 시트 열기
@@ -152,8 +166,8 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
           data: const MediaQueryData(),
           child: Material(
             child: ShareCard(
-              title: widget.mandalart.title,
-              deadline: widget.mandalart.dateRangeLabel,
+              title: _mandalart.title,
+              deadline: _mandalart.dateRangeLabel,
               goals: _currentGoals,
             ),
           ),
@@ -181,7 +195,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       final box = context.findRenderObject() as RenderBox?;
       await Share.shareXFiles(
         [XFile(imagePath)],
-        text: '${widget.mandalart.title} - 한다라트',
+        text: '${_mandalart.title} - 한다라트',
         sharePositionOrigin: box != null
             ? box.localToGlobal(Offset.zero) & box.size
             : const Rect.fromLTWH(0, 0, 100, 100),
@@ -208,7 +222,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
         title: const Text('한다라트'),
       ),
       body: StreamBuilder<List<GoalEntity>>(
-        stream: _repository.watchGoals(widget.mandalart.id),
+        stream: _repository.watchGoals(_mandalart.id),
         builder: (context, snapshot) {
           final goals = snapshot.hasData
               ? _mapEntitiesToGoals(snapshot.data!)
@@ -221,9 +235,9 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
             children: [
               // 헤더 (이모지, 제목, 달성률, 기한)
               MandalartHeader(
-                title: widget.mandalart.title,
-                emoji: widget.mandalart.emoji,
-                deadline: widget.mandalart.dateRangeLabel,
+                title: _mandalart.title,
+                emoji: _mandalart.emoji,
+                deadline: _mandalart.dateRangeLabel,
                 goals: goals,
                 onMenuTap: () => _showMandalartOptions(context),
               ),
@@ -233,7 +247,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
                 child: Center(
                   child: MandalartGrid(
                     goals: goals,
-                    mandalartId: widget.mandalart.id,
+                    mandalartId: _mandalart.id,
                     onCellTap: _onCellTap,
                     onCellLongPress: _onCellLongPress,
                   ),
@@ -284,7 +298,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       builder: (context) => AlertDialog(
         title: const Text('한다라트 삭제'),
         content: Text(
-          '"${widget.mandalart.title}"을(를) 삭제하시겠습니까?\n모든 목표도 함께 삭제됩니다.',
+          '"${_mandalart.title}"을(를) 삭제하시겠습니까?\n모든 목표도 함께 삭제됩니다.',
         ),
         actions: [
           TextButton(
@@ -305,7 +319,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       final prefs = await PreferencesService.getInstance();
       await prefs.clearLastMandalartId();
       // 만다라트 삭제
-      await _mandalartRepository.deleteMandalart(widget.mandalart.id);
+      await _mandalartRepository.deleteMandalart(_mandalart.id);
       // 홈 화면으로 이동
       if (mounted) _goToHome();
     }
@@ -324,7 +338,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
                 title: const Text('한다라트 수정'),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: 수정 기능
+                  _editMandalart();
                 },
               ),
               ListTile(
