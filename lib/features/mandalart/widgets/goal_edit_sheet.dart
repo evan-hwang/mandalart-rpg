@@ -108,12 +108,45 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
               ),
               const SizedBox(height: 16),
 
-              // 상태 선택
-              _StatusSelector(
-                value: _status,
-                onChanged: (status) => setState(() => _status = status),
-              ),
-              const SizedBox(height: 16),
+              // 상태 선택 (세부 과제만)
+              if (role == CellRole.detail) ...[
+                _StatusSelector(
+                  value: _status,
+                  onChanged: (status) => setState(() => _status = status),
+                ),
+                const SizedBox(height: 16),
+              ] else ...[
+                // 메인/서브 목표는 자동 완료 안내
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 18,
+                        color: AppColors.textTertiary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          role == CellRole.main
+                              ? '서브 과제가 모두 완료되면 자동으로 완료됩니다'
+                              : '세부 과제가 모두 완료되면 자동으로 완료됩니다',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // 메모 입력
               TextField(
