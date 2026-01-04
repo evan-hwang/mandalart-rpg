@@ -134,8 +134,8 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
                       Expanded(
                         child: Text(
                           role == CellRole.main
-                              ? '서브 과제가 모두 완료되면 자동으로 완료됩니다'
-                              : '세부 과제가 모두 완료되면 자동으로 완료됩니다',
+                              ? '세부 목표가 모두 완료되면 자동으로 완료됩니다'
+                              : '계획이 모두 완료되면 자동으로 완료됩니다',
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
@@ -188,9 +188,9 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
 
   String _sheetTitle(CellRole role) {
     return switch (role) {
-      CellRole.main => '메인 목표 편집',
-      CellRole.sub => '서브 과제 편집',
-      CellRole.detail => '세부 과제 편집',
+      CellRole.main => '목표 편집',
+      CellRole.sub => '세부 목표 편집',
+      CellRole.detail => '계획 편집',
     };
   }
 
