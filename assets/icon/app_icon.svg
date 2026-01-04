@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E293B"/>
+      <stop offset="100%" style="stop-color:#0F172A"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A574"/>
+      <stop offset="100%" style="stop-color:#B8956A"/>
+    </linearGradient>
+    <linearGradient id="sageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8EAD8B"/>
+      <stop offset="100%" style="stop-color:#7A9E77"/>
+    </linearGradient>
+    <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9DBFB0"/>
+      <stop offset="100%" style="stop-color:#8DB4A0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="220" fill="url(#bgGrad)"/>
+
+  <!-- 5x5 Grid - 정확히 중앙 배치 -->
+  <!-- cell: 120, gap: 16, total: 120*5 + 16*4 = 664 -->
+  <!-- offset: (1024-664)/2 = 180 -->
+  <g transform="translate(180, 180)">
+    <!-- Row 0 -->
+    <rect x="0" y="0" width="120" height="120" rx="18" fill="url(#tealGrad)" opacity="0.7"/>
+    <rect x="136" y="0" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.8"/>
+    <rect x="272" y="0" width="120" height="120" rx="18" fill="url(#tealGrad)" opacity="0.6"/>
+    <rect x="408" y="0" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.7"/>
+    <rect x="544" y="0" width="120" height="120" rx="18" fill="url(#tealGrad)" opacity="0.8"/>
+
+    <!-- Row 1 -->
+    <rect x="0" y="136" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.8"/>
+    <rect x="136" y="136" width="120" height="120" rx="22" fill="url(#goldGrad)" opacity="0.9"/>
+    <rect x="272" y="136" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.7"/>
+    <rect x="408" y="136" width="120" height="120" rx="22" fill="url(#goldGrad)" opacity="0.85"/>
+    <rect x="544" y="136" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.75"/>
+
+    <!-- Row 2 -->
+    <rect x="0" y="272" width="120" height="120" rx="18" fill="url(#tealGrad)" opacity="0.65"/>
+    <rect x="136" y="272" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.75"/>
+    <!-- Center main cell -->
+    <rect x="272" y="272" width="120" height="120" rx="24" fill="url(#goldGrad)"/>
+    <rect x="272" y="272" width="120" height="120" rx="24" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.4"/>
+    <rect x="408" y="272" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.8"/>
+    <rect x="544" y="272" width="120" height="120" rx="18" fill="url(#tealGrad)" opacity="0.7"/>
+
+    <!-- Row 3 -->
+    <rect x="0" y="408" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.75"/>
+    <rect x="136" y="408" width="120" height="120" rx="22" fill="url(#goldGrad)" opacity="0.85"/>
+    <rect x="272" y="408" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.7"/>
+    <rect x="408" y="408" width="120" height="120" rx="22" fill="url(#goldGrad)" opacity="0.9"/>
+    <rect x="544" y="408" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.8"/>
+
+    <!-- Row 4 -->
+    <rect x="0" y="544" width="120" height="120" rx="18" fill="url(#tealGrad)" opacity="0.8"/>
+    <rect x="136" y="544" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.7"/>
+    <rect x="272" y="544" width="120" height="120" rx="18" fill="url(#tealGrad)" opacity="0.75"/>
+    <rect x="408" y="544" width="120" height="120" rx="18" fill="url(#sageGrad)" opacity="0.8"/>
+    <rect x="544" y="544" width="120" height="120" rx="18" fill="url(#tealGrad)" opacity="0.7"/>
+  </g>
+</svg>

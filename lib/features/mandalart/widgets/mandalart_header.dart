@@ -118,12 +118,23 @@ class MandalartHeader extends StatelessWidget {
                   color: AppColors.divider,
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  deadline!,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.flag_outlined,
+                      size: 14,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '목표 $deadline',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ],
@@ -146,41 +157,41 @@ class _GradientProgressBar extends StatelessWidget {
   final int total;
   final double ratio;
 
-  /// 달성률에 따른 그라데이션 색상
+  /// 달성률에 따른 그라데이션 색상 (따뜻한 톤)
   List<Color> get _gradientColors {
     if (ratio >= 1.0) {
-      // 100% 완료 - 골드 그라데이션
+      // 100% 완료 - 골드/머스타드 그라데이션
       return [
-        const Color(0xFFFFD700),
-        const Color(0xFFFFA500),
-        const Color(0xFFFF8C00),
+        const Color(0xFFD4A574),
+        const Color(0xFFC49565),
+        const Color(0xFFB8956A),
       ];
     } else if (ratio >= 0.75) {
-      // 75%+ - 블루 → 퍼플 → 골드
+      // 75%+ - 세이지 → 틸 → 머스타드
       return [
-        const Color(0xFF4ADE80),
-        const Color(0xFF06B6D4),
-        const Color(0xFFA78BFA),
-        const Color(0xFFFBBF24),
+        const Color(0xFF7A9E77),
+        const Color(0xFF8DB4A0),
+        const Color(0xFFB8A88A),
+        const Color(0xFFD4A574),
       ];
     } else if (ratio >= 0.5) {
-      // 50%+ - 그린 → 틸 → 블루
+      // 50%+ - 세이지 → 틸
       return [
-        const Color(0xFF4ADE80),
-        const Color(0xFF22D3EE),
-        const Color(0xFF60A5FA),
+        const Color(0xFF7A9E77),
+        const Color(0xFF8DB4A0),
+        const Color(0xFF9DBFB0),
       ];
     } else if (ratio >= 0.25) {
-      // 25%+ - 그린 → 틸
+      // 25%+ - 세이지 그린
       return [
-        const Color(0xFF4ADE80),
-        const Color(0xFF2DD4BF),
+        const Color(0xFF7A9E77),
+        const Color(0xFF8EAD8B),
       ];
     } else {
-      // 기본 - 단색 그린
+      // 기본 - 단색 세이지
       return [
-        const Color(0xFF4ADE80),
-        const Color(0xFF22C55E),
+        const Color(0xFF8EAD8B),
+        const Color(0xFF7A9E77),
       ];
     }
   }

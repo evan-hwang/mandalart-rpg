@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mandalart/core/constants/app_colors.dart';
 import 'package:mandalart/core/constants/grid_constants.dart';
 import 'package:mandalart/core/models/goal.dart';
 import 'package:mandalart/features/mandalart/widgets/mandalart_cell.dart';
@@ -220,22 +221,18 @@ class _AreaBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const normalBg = Color(0xFFE2E8F0); // slate-200
-    const completeBg = Color(0xFFBBF7D0); // green-200
-    const completeGlow = Color(0xFF22C55E); // green-500
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        color: isComplete ? completeBg : normalBg,
+        color: isComplete ? AppColors.areaComplete : AppColors.areaNormal,
         borderRadius: BorderRadius.circular(16),
         boxShadow: isComplete
             ? [
                 BoxShadow(
-                  color: completeGlow.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  spreadRadius: 2,
+                  color: AppColors.success.withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  spreadRadius: 1,
                 ),
               ]
             : null,

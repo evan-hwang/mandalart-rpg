@@ -1,4 +1,8 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:mandalart/core/constants/app_colors.dart';
 import 'package:mandalart/core/constants/grid_constants.dart';
 import 'package:mandalart/core/models/goal.dart';
@@ -11,6 +15,10 @@ import 'package:mandalart/features/mandalart/mandalart.dart';
 import 'package:mandalart/features/mandalart/widgets/goal_edit_sheet.dart';
 import 'package:mandalart/features/mandalart/widgets/mandalart_grid.dart';
 import 'package:mandalart/features/mandalart/widgets/mandalart_header.dart';
+import 'package:mandalart/features/mandalart/widgets/share_card.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MandalartDetailScreen extends StatefulWidget {
   const MandalartDetailScreen({
@@ -27,6 +35,9 @@ class MandalartDetailScreen extends StatefulWidget {
 class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
   final GoalRepository _repository = GoalRepository(appDatabase);
   final MandalartRepository _mandalartRepository = MandalartRepository(appDatabase);
+  final ScreenshotController _screenshotController = ScreenshotController();
+
+  List<Goal> _currentGoals = [];
 
   @override
   void initState() {
@@ -132,6 +143,58 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
     }).toList();
   }
 
+  /// 만다라트 이미지로 공유
+  Future<void> _shareAsImage() async {
+    try {
+      // 공유 카드 캡쳐
+      final Uint8List? imageBytes = await _screenshotController.captureFromWidget(
+        MediaQuery(
+          data: const MediaQueryData(),
+          child: Material(
+            child: ShareCard(
+              title: widget.mandalart.title,
+              deadline: widget.mandalart.dateRangeLabel,
+              goals: _currentGoals,
+            ),
+          ),
+        ),
+        pixelRatio: 3.0,
+        delay: const Duration(milliseconds: 100),
+      );
+
+      if (imageBytes == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('이미지 생성에 실패했습니다')),
+          );
+        }
+        return;
+      }
+
+      // 임시 파일로 저장
+      final directory = await getTemporaryDirectory();
+      final imagePath = '${directory.path}/mandalart_${DateTime.now().millisecondsSinceEpoch}.png';
+      final imageFile = File(imagePath);
+      await imageFile.writeAsBytes(imageBytes);
+
+      // 공유 (iOS에서는 sharePositionOrigin 필요)
+      final box = context.findRenderObject() as RenderBox?;
+      await Share.shareXFiles(
+        [XFile(imagePath)],
+        text: '${widget.mandalart.title} - 한다라트',
+        sharePositionOrigin: box != null
+            ? box.localToGlobal(Offset.zero) & box.size
+            : const Rect.fromLTWH(0, 0, 100, 100),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('공유 실패: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,6 +214,9 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
           final goals = snapshot.hasData
               ? _mapEntitiesToGoals(snapshot.data!)
               : <Goal>[];
+
+          // 공유용으로 현재 goals 저장
+          _currentGoals = goals;
 
           return Column(
             children: [
@@ -182,12 +248,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
                   child: SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        // TODO: 공유 기능 구현
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('공유 기능은 준비 중입니다')),
-                        );
-                      },
+                      onPressed: _shareAsImage,
                       icon: const Icon(Icons.share_outlined, size: 18),
                       label: const Text('공유하기'),
                       style: OutlinedButton.styleFrom(

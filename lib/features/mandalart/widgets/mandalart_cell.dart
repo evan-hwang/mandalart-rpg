@@ -90,23 +90,23 @@ class MandalartCell extends StatelessWidget {
 
   /// 완료 배지 색상
   Color get _completeBadgeColor {
-    if (isAllComplete) return const Color(0xFFFFD700); // 골드
-    return AppColors.statusDoneCheck; // 그린
+    if (isAllComplete) return const Color(0xFFD4A574); // 골드/머스타드
+    return AppColors.statusDoneCheck; // 세이지 그린
   }
 
   BoxDecoration _buildDecoration(CellRole role) {
     return switch (role) {
       CellRole.main => BoxDecoration(
-          color: isAllComplete ? const Color(0xFF1E3A5F) : AppColors.mainCell,
+          color: isAllComplete ? const Color(0xFF1E2D3D) : AppColors.mainCell,
           borderRadius: BorderRadius.circular(12),
           border: isAllComplete
-              ? Border.all(color: const Color(0xFFFFD700), width: 2)
+              ? Border.all(color: const Color(0xFFD4A574), width: 2)
               : null,
           boxShadow: isAllComplete
               ? [
                   BoxShadow(
-                    color: const Color(0xFFFFD700).withValues(alpha: 0.3),
-                    blurRadius: 12,
+                    color: const Color(0xFFD4A574).withValues(alpha: 0.3),
+                    blurRadius: 10,
                     spreadRadius: 1,
                   ),
                 ]
@@ -114,13 +114,13 @@ class MandalartCell extends StatelessWidget {
         ),
       CellRole.sub => BoxDecoration(
           color: isAreaComplete
-              ? const Color(0xFF22C55E) // 더 진한 초록
+              ? const Color(0xFFB8956A) // 진한 머스타드
               : AppColors.subCell,
           borderRadius: BorderRadius.circular(10),
           boxShadow: isAreaComplete
               ? [
                   BoxShadow(
-                    color: AppColors.statusDoneCheck.withValues(alpha: 0.3),
+                    color: AppColors.primaryDark.withValues(alpha: 0.3),
                     blurRadius: 8,
                     spreadRadius: 1,
                   ),
@@ -149,7 +149,7 @@ class MandalartCell extends StatelessWidget {
   Color _detailBorderColor() {
     return switch (goal.status) {
       GoalStatus.todo => AppColors.detailCellBorder,
-      GoalStatus.doing => Colors.amber.shade400,
+      GoalStatus.doing => const Color(0xFFD4A574), // 머스타드
       GoalStatus.done => AppColors.statusDoneBorder,
     };
   }
@@ -157,13 +157,13 @@ class MandalartCell extends StatelessWidget {
   TextStyle _textStyle(CellRole role, bool isEmpty) {
     final baseStyle = switch (role) {
       CellRole.main => TextStyle(
-          color: isAllComplete ? const Color(0xFFFFD700) : AppColors.mainCellText,
+          color: isAllComplete ? const Color(0xFFD4A574) : AppColors.mainCellText,
           fontSize: 11,
           fontWeight: FontWeight.w700,
           height: 1.3,
         ),
       CellRole.sub => TextStyle(
-          color: isAreaComplete ? Colors.white : AppColors.subCellText,
+          color: isAreaComplete ? const Color(0xFFFFFEFB) : AppColors.subCellText,
           fontSize: 11,
           fontWeight: FontWeight.w600,
           height: 1.3,
@@ -187,9 +187,9 @@ class MandalartCell extends StatelessWidget {
 
   String _placeholderText(CellRole role) {
     return switch (role) {
-      CellRole.main => '메인 목표',
-      CellRole.sub => '서브 과제',
-      CellRole.detail => '',
+      CellRole.main => '목표',
+      CellRole.sub => '세부 목표',
+      CellRole.detail => '계획',
     };
   }
 }

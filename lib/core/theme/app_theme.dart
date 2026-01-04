@@ -3,9 +3,35 @@ import 'package:mandalart/core/constants/app_colors.dart';
 
 /// 앱 테마 설정
 abstract final class AppTheme {
+  static const String _fontFamily = 'Pretendard';
+
+  /// 모바일 최적화 텍스트 테마
+  static TextTheme get _textTheme => const TextTheme(
+    // 제목
+    displayLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, height: 1.3),
+    displayMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, height: 1.3),
+    displaySmall: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, height: 1.3),
+    headlineLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, height: 1.4),
+    headlineMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, height: 1.4),
+    headlineSmall: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.4),
+    // 본문
+    titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, height: 1.4),
+    titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.4),
+    titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.4),
+    bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.5),
+    bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.5),
+    bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.5),
+    // 라벨
+    labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.3),
+    labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 1.3),
+    labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, height: 1.3),
+  );
+
   static ThemeData get light => ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
+    fontFamily: _fontFamily,
+    textTheme: _textTheme,
 
     // 컬러 스킴
     colorScheme: ColorScheme.light(
@@ -27,6 +53,7 @@ abstract final class AppTheme {
       elevation: 0,
       centerTitle: false,
       titleTextStyle: TextStyle(
+        fontFamily: _fontFamily,
         color: AppColors.textPrimary,
         fontSize: 20,
         fontWeight: FontWeight.w600,
@@ -127,6 +154,10 @@ abstract final class AppTheme {
       primary: AppColors.primary,
       surface: const Color(0xFF1E293B),
       onSurface: Colors.white,
+    ),
+    textTheme: _textTheme.apply(
+      bodyColor: Colors.white,
+      displayColor: Colors.white,
     ),
   );
 }
