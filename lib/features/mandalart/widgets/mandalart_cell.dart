@@ -29,10 +29,17 @@ class _MandalartCellState extends State<MandalartCell>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
+
+    // 첫 프레임 이후에 초기화 완료 표시 (데이터 로딩 애니메이션 방지)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _isInitialized = true;
+    });
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -62,8 +69,9 @@ class _MandalartCellState extends State<MandalartCell>
   void didUpdateWidget(MandalartCell oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // 상태가 변경되었을 때 애니메이션 트리거
-    if (oldWidget.goal.status != widget.goal.status) {
+    // 초기화 완료 후에만 상태 변경 애니메이션 트리거
+    // (화면 진입 시 데이터 로딩으로 인한 애니메이션 방지)
+    if (_isInitialized && oldWidget.goal.status != widget.goal.status) {
       _triggerStatusAnimation(widget.goal.status);
     }
   }
