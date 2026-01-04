@@ -16,6 +16,7 @@ class MandalartRepository {
                 (row) => Mandalart(
                   id: row.id,
                   title: row.title,
+                  emoji: row.emoji,
                   dateRangeLabel: row.dateRangeLabel,
                 ),
               )
@@ -30,6 +31,7 @@ class MandalartRepository {
         .write(
       MandalartsCompanion(
         title: Value(mandalart.title),
+        emoji: Value(mandalart.emoji),
         dateRangeLabel: Value(mandalart.dateRangeLabel),
         updatedAt: Value(now),
       ),
@@ -40,6 +42,7 @@ class MandalartRepository {
             MandalartsCompanion(
               id: Value(mandalart.id),
               title: Value(mandalart.title),
+              emoji: Value(mandalart.emoji),
               dateRangeLabel: Value(mandalart.dateRangeLabel),
               createdAt: Value(now),
               updatedAt: Value(now),
@@ -65,6 +68,7 @@ class MandalartRepository {
     return Mandalart(
       id: row.id,
       title: row.title,
+      emoji: row.emoji,
       dateRangeLabel: row.dateRangeLabel,
     );
   }

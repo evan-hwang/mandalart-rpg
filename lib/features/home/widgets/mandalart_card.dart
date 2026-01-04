@@ -39,12 +39,17 @@ class MandalartCard extends StatelessWidget {
                 color: AppColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
-                child: Icon(
-                  Icons.flag_rounded,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
+              child: Center(
+                child: mandalart.emoji != null && mandalart.emoji!.isNotEmpty
+                    ? Text(
+                        mandalart.emoji!,
+                        style: const TextStyle(fontSize: 24),
+                      )
+                    : const Icon(
+                        Icons.flag_rounded,
+                        color: AppColors.primary,
+                        size: 24,
+                      ),
               ),
             ),
 

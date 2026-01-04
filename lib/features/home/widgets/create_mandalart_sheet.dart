@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mandalart/core/constants/app_colors.dart';
+import 'package:mandalart/features/home/widgets/emoji_picker_dialog.dart';
 import 'package:mandalart/features/mandalart/mandalart.dart';
 
 /// 만다라트 생성/수정 바텀시트
@@ -28,6 +29,7 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
   late final TextEditingController _titleController;
   late final TextEditingController _deadlineController;
   DateTime? _selectedDate;
+  String? _selectedEmoji;
 
   bool get _isEditing => widget.existing != null;
 
@@ -38,6 +40,7 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
     _deadlineController = TextEditingController(
       text: widget.existing?.dateRangeLabel ?? '',
     );
+    _selectedEmoji = widget.existing?.emoji;
   }
 
   @override
@@ -63,6 +66,18 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
     }
   }
 
+  Future<void> _pickEmoji() async {
+    final emoji = await EmojiPickerDialog.show(
+      context,
+      selectedEmoji: _selectedEmoji,
+    );
+    if (emoji != null) {
+      setState(() {
+        _selectedEmoji = emoji.isEmpty ? null : emoji;
+      });
+    }
+  }
+
   void _save() {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
@@ -76,6 +91,7 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
     final mandalart = Mandalart(
       id: widget.existing?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
+      emoji: _selectedEmoji,
       dateRangeLabel: deadline.isEmpty ? '기간 없음' : deadline,
     );
 
@@ -130,6 +146,51 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
                 ),
               ),
               const SizedBox(height: 24),
+
+              // 이모지 선택
+              Center(
+                child: GestureDetector(
+                  onTap: _pickEmoji,
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppColors.divider,
+                        width: 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: _selectedEmoji != null
+                          ? Text(
+                              _selectedEmoji!,
+                              style: const TextStyle(fontSize: 36),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.add_reaction_outlined,
+                                  size: 28,
+                                  color: AppColors.textTertiary,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '이모지',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
 
               // 제목 입력
               TextField(

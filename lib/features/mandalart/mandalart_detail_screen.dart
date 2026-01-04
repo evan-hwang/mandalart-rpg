@@ -223,7 +223,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
               // 헤더 (이모지, 제목, 달성률, 기한)
               MandalartHeader(
                 title: widget.mandalart.title,
-                emoji: null, // TODO: 이모지 필드 추가 후 연결
+                emoji: widget.mandalart.emoji,
                 deadline: widget.mandalart.dateRangeLabel,
                 goals: goals,
                 onMenuTap: () => _showMandalartOptions(context),

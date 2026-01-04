@@ -27,6 +27,15 @@ class $MandalartsTable extends Mandalarts
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _emojiMeta = const VerificationMeta('emoji');
+  @override
+  late final GeneratedColumn<String> emoji = GeneratedColumn<String>(
+    'emoji',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _dateRangeLabelMeta = const VerificationMeta(
     'dateRangeLabel',
   );
@@ -64,6 +73,7 @@ class $MandalartsTable extends Mandalarts
   List<GeneratedColumn> get $columns => [
     id,
     title,
+    emoji,
     dateRangeLabel,
     createdAt,
     updatedAt,
@@ -92,6 +102,12 @@ class $MandalartsTable extends Mandalarts
       );
     } else if (isInserting) {
       context.missing(_titleMeta);
+    }
+    if (data.containsKey('emoji')) {
+      context.handle(
+        _emojiMeta,
+        emoji.isAcceptableOrUnknown(data['emoji']!, _emojiMeta),
+      );
     }
     if (data.containsKey('date_range_label')) {
       context.handle(
@@ -137,6 +153,10 @@ class $MandalartsTable extends Mandalarts
         DriftSqlType.string,
         data['${effectivePrefix}title'],
       )!,
+      emoji: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}emoji'],
+      ),
       dateRangeLabel: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}date_range_label'],
@@ -161,12 +181,14 @@ class $MandalartsTable extends Mandalarts
 class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
   final String id;
   final String title;
+  final String? emoji;
   final String dateRangeLabel;
   final DateTime createdAt;
   final DateTime updatedAt;
   const MandalartEntity({
     required this.id,
     required this.title,
+    this.emoji,
     required this.dateRangeLabel,
     required this.createdAt,
     required this.updatedAt,
@@ -176,6 +198,9 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['title'] = Variable<String>(title);
+    if (!nullToAbsent || emoji != null) {
+      map['emoji'] = Variable<String>(emoji);
+    }
     map['date_range_label'] = Variable<String>(dateRangeLabel);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -186,6 +211,9 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
     return MandalartsCompanion(
       id: Value(id),
       title: Value(title),
+      emoji: emoji == null && nullToAbsent
+          ? const Value.absent()
+          : Value(emoji),
       dateRangeLabel: Value(dateRangeLabel),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -200,6 +228,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
     return MandalartEntity(
       id: serializer.fromJson<String>(json['id']),
       title: serializer.fromJson<String>(json['title']),
+      emoji: serializer.fromJson<String?>(json['emoji']),
       dateRangeLabel: serializer.fromJson<String>(json['dateRangeLabel']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -211,6 +240,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'title': serializer.toJson<String>(title),
+      'emoji': serializer.toJson<String?>(emoji),
       'dateRangeLabel': serializer.toJson<String>(dateRangeLabel),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -220,12 +250,14 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
   MandalartEntity copyWith({
     String? id,
     String? title,
+    Value<String?> emoji = const Value.absent(),
     String? dateRangeLabel,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => MandalartEntity(
     id: id ?? this.id,
     title: title ?? this.title,
+    emoji: emoji.present ? emoji.value : this.emoji,
     dateRangeLabel: dateRangeLabel ?? this.dateRangeLabel,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -234,6 +266,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
     return MandalartEntity(
       id: data.id.present ? data.id.value : this.id,
       title: data.title.present ? data.title.value : this.title,
+      emoji: data.emoji.present ? data.emoji.value : this.emoji,
       dateRangeLabel: data.dateRangeLabel.present
           ? data.dateRangeLabel.value
           : this.dateRangeLabel,
@@ -247,6 +280,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
     return (StringBuffer('MandalartEntity(')
           ..write('id: $id, ')
           ..write('title: $title, ')
+          ..write('emoji: $emoji, ')
           ..write('dateRangeLabel: $dateRangeLabel, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -256,13 +290,14 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
 
   @override
   int get hashCode =>
-      Object.hash(id, title, dateRangeLabel, createdAt, updatedAt);
+      Object.hash(id, title, emoji, dateRangeLabel, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is MandalartEntity &&
           other.id == this.id &&
           other.title == this.title &&
+          other.emoji == this.emoji &&
           other.dateRangeLabel == this.dateRangeLabel &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -271,6 +306,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
 class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
   final Value<String> id;
   final Value<String> title;
+  final Value<String?> emoji;
   final Value<String> dateRangeLabel;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -278,6 +314,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
   const MandalartsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
+    this.emoji = const Value.absent(),
     this.dateRangeLabel = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -286,6 +323,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
   MandalartsCompanion.insert({
     required String id,
     required String title,
+    this.emoji = const Value.absent(),
     required String dateRangeLabel,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -298,6 +336,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
   static Insertable<MandalartEntity> custom({
     Expression<String>? id,
     Expression<String>? title,
+    Expression<String>? emoji,
     Expression<String>? dateRangeLabel,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -306,6 +345,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (title != null) 'title': title,
+      if (emoji != null) 'emoji': emoji,
       if (dateRangeLabel != null) 'date_range_label': dateRangeLabel,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -316,6 +356,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
   MandalartsCompanion copyWith({
     Value<String>? id,
     Value<String>? title,
+    Value<String?>? emoji,
     Value<String>? dateRangeLabel,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -324,6 +365,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
     return MandalartsCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
+      emoji: emoji ?? this.emoji,
       dateRangeLabel: dateRangeLabel ?? this.dateRangeLabel,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -339,6 +381,9 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
+    }
+    if (emoji.present) {
+      map['emoji'] = Variable<String>(emoji.value);
     }
     if (dateRangeLabel.present) {
       map['date_range_label'] = Variable<String>(dateRangeLabel.value);
@@ -360,6 +405,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
     return (StringBuffer('MandalartsCompanion(')
           ..write('id: $id, ')
           ..write('title: $title, ')
+          ..write('emoji: $emoji, ')
           ..write('dateRangeLabel: $dateRangeLabel, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -896,6 +942,7 @@ typedef $$MandalartsTableCreateCompanionBuilder =
     MandalartsCompanion Function({
       required String id,
       required String title,
+      Value<String?> emoji,
       required String dateRangeLabel,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -905,6 +952,7 @@ typedef $$MandalartsTableUpdateCompanionBuilder =
     MandalartsCompanion Function({
       Value<String> id,
       Value<String> title,
+      Value<String?> emoji,
       Value<String> dateRangeLabel,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -927,6 +975,11 @@ class $$MandalartsTableFilterComposer
 
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get emoji => $composableBuilder(
+    column: $table.emoji,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -965,6 +1018,11 @@ class $$MandalartsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get emoji => $composableBuilder(
+    column: $table.emoji,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get dateRangeLabel => $composableBuilder(
     column: $table.dateRangeLabel,
     builder: (column) => ColumnOrderings(column),
@@ -995,6 +1053,9 @@ class $$MandalartsTableAnnotationComposer
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get emoji =>
+      $composableBuilder(column: $table.emoji, builder: (column) => column);
 
   GeneratedColumn<String> get dateRangeLabel => $composableBuilder(
     column: $table.dateRangeLabel,
@@ -1041,6 +1102,7 @@ class $$MandalartsTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> title = const Value.absent(),
+                Value<String?> emoji = const Value.absent(),
                 Value<String> dateRangeLabel = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -1048,6 +1110,7 @@ class $$MandalartsTableTableManager
               }) => MandalartsCompanion(
                 id: id,
                 title: title,
+                emoji: emoji,
                 dateRangeLabel: dateRangeLabel,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -1057,6 +1120,7 @@ class $$MandalartsTableTableManager
               ({
                 required String id,
                 required String title,
+                Value<String?> emoji = const Value.absent(),
                 required String dateRangeLabel,
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -1064,6 +1128,7 @@ class $$MandalartsTableTableManager
               }) => MandalartsCompanion.insert(
                 id: id,
                 title: title,
+                emoji: emoji,
                 dateRangeLabel: dateRangeLabel,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

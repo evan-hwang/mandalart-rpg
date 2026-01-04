@@ -11,6 +11,7 @@ part 'app_database.g.dart';
 class Mandalarts extends Table {
   TextColumn get id => text()();
   TextColumn get title => text()();
+  TextColumn get emoji => text().nullable()();
   TextColumn get dateRangeLabel => text()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
@@ -39,7 +40,22 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 2) {
+          // v1 -> v2: Add emoji column to mandalarts table
+          await m.addColumn(mandalarts, mandalarts.emoji);
+        }
+      },
+    );
+  }
 }
 
 final AppDatabase appDatabase = AppDatabase();
