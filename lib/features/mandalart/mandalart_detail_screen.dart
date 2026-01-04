@@ -15,6 +15,7 @@ import 'package:mandalart/features/home/widgets/create_mandalart_sheet.dart';
 import 'package:mandalart/features/mandalart/mandalart.dart';
 import 'package:mandalart/features/mandalart/widgets/goal_edit_sheet.dart';
 import 'package:mandalart/features/mandalart/widgets/mandalart_grid.dart';
+import 'package:mandalart/features/mandalart/widgets/memo_list_sheet.dart';
 import 'package:mandalart/features/mandalart/widgets/mandalart_header.dart';
 import 'package:mandalart/features/mandalart/widgets/share_card.dart';
 import 'package:path_provider/path_provider.dart';
@@ -65,25 +66,51 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
     }
   }
 
-  /// 셀 탭 - 편집 시트 열기
+  /// 셀 탭 - 역할에 따라 다른 동작
   Future<void> _onCellTap(Goal goal) async {
-    final updatedGoal = await GoalEditSheet.show(context, goal);
-    if (updatedGoal == null) return;
-
-    await _saveGoal(updatedGoal);
+    if (goal.role == CellRole.sub) {
+      // 서브 과제: 회고(메모) 리스트 보기
+      _showMemoList(goal);
+    } else {
+      // 메인/세부 과제: 편집 시트 열기
+      final updatedGoal = await GoalEditSheet.show(context, goal);
+      if (updatedGoal == null) return;
+      await _saveGoal(updatedGoal);
+    }
   }
 
-  /// 셀 롱프레스 - 상태 토글
-  Future<void> _onCellLongPress(Goal goal) async {
-    // 세부 과제만 상태 토글 가능
-    if (goal.role != CellRole.detail) {
-      _onCellTap(goal);
-      return;
-    }
+  /// 서브 과제의 메모 리스트 보기
+  void _showMemoList(Goal subGoal) {
+    final detailIndices = kSubGoalDetailMapping[subGoal.gridIndex];
+    if (detailIndices == null) return;
 
-    final nextStatus = goal.status.next;
-    final updatedGoal = goal.copyWith(status: nextStatus);
-    await _saveGoal(updatedGoal);
+    final detailGoals = detailIndices
+        .map((idx) => _currentGoals.firstWhere(
+              (g) => g.gridIndex == idx,
+              orElse: () => Goal(mandalartId: subGoal.mandalartId, gridIndex: idx),
+            ))
+        .toList();
+
+    MemoListSheet.show(
+      context,
+      subGoal: subGoal,
+      detailGoals: detailGoals,
+    );
+  }
+
+  /// 셀 롱프레스 - 역할에 따라 다른 동작
+  Future<void> _onCellLongPress(Goal goal) async {
+    if (goal.role == CellRole.detail) {
+      // 세부 과제: 상태 토글
+      final nextStatus = goal.status.next;
+      final updatedGoal = goal.copyWith(status: nextStatus);
+      await _saveGoal(updatedGoal);
+    } else {
+      // 메인/서브 과제: 편집 시트 열기
+      final updatedGoal = await GoalEditSheet.show(context, goal);
+      if (updatedGoal == null) return;
+      await _saveGoal(updatedGoal);
+    }
   }
 
   /// 목표 저장 + 자동 완료 체크
@@ -153,6 +180,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
         text: e.goalText,
         status: GoalStatus.fromValue(e.status),
         memo: e.memo ?? '',
+        updatedAt: e.updatedAt,
       );
     }).toList();
   }
