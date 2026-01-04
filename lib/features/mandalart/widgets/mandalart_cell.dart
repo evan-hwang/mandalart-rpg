@@ -29,7 +29,6 @@ class _MandalartCellState extends State<MandalartCell>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _bounceAnimation;
 
   @override
   void initState() {
@@ -57,14 +56,6 @@ class _MandalartCellState extends State<MandalartCell>
         weight: 40,
       ),
     ]).animate(_animationController);
-
-    // 완료 시 추가 바운스
-    _bounceAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.elasticOut,
-      ),
-    );
   }
 
   @override
@@ -129,32 +120,6 @@ class _MandalartCellState extends State<MandalartCell>
                       ),
                     ),
                   ),
-                  // 완료 시 체크마크 오버레이 (세부 과제만)
-                  if (widget.goal.isDone && role == CellRole.detail)
-                    Positioned.fill(
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 200),
-                        opacity: widget.goal.isDone ? 1.0 : 0.0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: AnimatedScale(
-                              duration: const Duration(milliseconds: 300),
-                              scale: _animationController.isAnimating
-                                  ? _bounceAnimation.value
-                                  : 1.0,
-                              child: const Icon(
-                                Icons.check_rounded,
-                                color: AppColors.success,
-                                size: 24,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
