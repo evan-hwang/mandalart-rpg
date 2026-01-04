@@ -35,13 +35,13 @@ class MemoListSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 메모가 있는 세부 과제 수
-    final memoCount = detailGoals.where((g) => g.hasMemo).length;
+    // 메모가 있는 세부 과제만 필터링
+    final goalsWithMemo = detailGoals.where((g) => g.hasMemo).toList();
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.4,
-      maxChildSize: 0.9,
+      initialChildSize: 0.5,
+      minChildSize: 0.3,
+      maxChildSize: 0.85,
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
@@ -52,35 +52,21 @@ class MemoListSheet extends StatelessWidget {
             children: [
               // 드래그 핸들 + 헤더
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 12, 16, 0),
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 드래그 핸들 + 닫기 버튼
-                    Row(
-                      children: [
-                        const Spacer(),
-                        Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: AppColors.divider,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.divider,
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: IconButton(
-                              icon: const Icon(Icons.close, size: 20),
-                              color: AppColors.textTertiary,
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Container(
@@ -112,44 +98,63 @@ class MemoListSheet extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Text(
-                        '${detailGoals.length}개 계획 · $memoCount개 메모',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
 
-              // 세부 목표 리스트 (전체)
+              // 메모가 있는 세부 목표 리스트
               Expanded(
-                child: ListView.separated(
-                  controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                  itemCount: detailGoals.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final goal = detailGoals[index];
-                    return _GoalCard(
-                      goal: goal,
-                      onTap: () {
-                        Navigator.pop(context);
-                        onGoalTap(goal);
-                      },
-                    );
-                  },
-                ),
+                child: goalsWithMemo.isEmpty
+                    ? _EmptyState()
+                    : ListView.separated(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                        itemCount: goalsWithMemo.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final goal = goalsWithMemo[index];
+                          return _GoalCard(
+                            goal: goal,
+                            onTap: () {
+                              Navigator.pop(context);
+                              onGoalTap(goal);
+                            },
+                          );
+                        },
+                      ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+/// 빈 상태 위젯
+class _EmptyState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.note_alt_outlined,
+            size: 48,
+            color: AppColors.textTertiary,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '아직 메모가 없어요',
+            style: TextStyle(
+              fontSize: 15,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
