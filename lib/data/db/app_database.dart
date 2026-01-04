@@ -13,6 +13,7 @@ class Mandalarts extends Table {
   TextColumn get title => text()();
   TextColumn get emoji => text().nullable()();
   TextColumn get dateRangeLabel => text()();
+  BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 
@@ -40,7 +41,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -52,6 +53,10 @@ class AppDatabase extends _$AppDatabase {
         if (from < 2) {
           // v1 -> v2: Add emoji column to mandalarts table
           await m.addColumn(mandalarts, mandalarts.emoji);
+        }
+        if (from < 3) {
+          // v2 -> v3: Add isPinned column to mandalarts table
+          await m.addColumn(mandalarts, mandalarts.isPinned);
         }
       },
     );

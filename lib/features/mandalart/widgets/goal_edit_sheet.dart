@@ -264,7 +264,6 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = switch (status) {
       GoalStatus.todo => AppColors.textTertiary,
-      GoalStatus.doing => Colors.amber.shade600,
       GoalStatus.done => AppColors.statusDoneCheck,
     };
 

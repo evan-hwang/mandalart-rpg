@@ -1,23 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:mandalart/core/constants/app_colors.dart';
+import 'package:mandalart/core/data/mandalart_templates.dart';
 import 'package:mandalart/features/home/widgets/emoji_picker_dialog.dart';
 import 'package:mandalart/features/mandalart/mandalart.dart';
+
+/// 만다라트 생성 결과 (Mandalart + 선택된 템플릿)
+class CreateMandalartResult {
+  final Mandalart mandalart;
+  final MandalartTemplate? template;
+
+  CreateMandalartResult({required this.mandalart, this.template});
+}
 
 /// 만다라트 생성/수정 바텀시트
 class CreateMandalartSheet extends StatefulWidget {
   const CreateMandalartSheet({
     super.key,
     this.existing,
+    this.template,
   });
 
   final Mandalart? existing;
+  final MandalartTemplate? template;
 
-  static Future<Mandalart?> show(BuildContext context, {Mandalart? existing}) {
-    return showModalBottomSheet<Mandalart>(
+  static Future<CreateMandalartResult?> show(
+    BuildContext context, {
+    Mandalart? existing,
+    MandalartTemplate? template,
+  }) {
+    return showModalBottomSheet<CreateMandalartResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => CreateMandalartSheet(existing: existing),
+      builder: (_) => CreateMandalartSheet(existing: existing, template: template),
     );
   }
 
@@ -32,15 +47,19 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
   String? _selectedEmoji;
 
   bool get _isEditing => widget.existing != null;
+  bool get _hasTemplate => widget.template != null;
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.existing?.title ?? '');
+    // 기존 만다라트 > 템플릿 > 빈 값 순으로 초기값 설정
+    _titleController = TextEditingController(
+      text: widget.existing?.title ?? widget.template?.title ?? '',
+    );
     _deadlineController = TextEditingController(
       text: widget.existing?.dateRangeLabel ?? '',
     );
-    _selectedEmoji = widget.existing?.emoji;
+    _selectedEmoji = widget.existing?.emoji ?? widget.template?.emoji;
   }
 
   @override
@@ -95,7 +114,13 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
       dateRangeLabel: deadline.isEmpty ? '기간 없음' : deadline,
     );
 
-    Navigator.pop(context, mandalart);
+    Navigator.pop(
+      context,
+      CreateMandalartResult(
+        mandalart: mandalart,
+        template: widget.template,
+      ),
+    );
   }
 
   @override
@@ -138,9 +163,11 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                '목표를 설정하고 25칸에 담아보세요',
-                style: TextStyle(
+              Text(
+                _hasTemplate
+                    ? '템플릿 "${widget.template!.title}"이 적용됩니다'
+                    : '목표를 설정하고 25칸에 담아보세요',
+                style: const TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),

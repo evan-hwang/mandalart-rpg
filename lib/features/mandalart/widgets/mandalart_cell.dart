@@ -103,7 +103,6 @@ class MandalartCell extends StatelessWidget {
   Color _detailCellColor() {
     return switch (goal.status) {
       GoalStatus.todo => AppColors.statusTodo,
-      GoalStatus.doing => AppColors.statusDoing,
       GoalStatus.done => AppColors.statusDone,
     };
   }
@@ -111,7 +110,6 @@ class MandalartCell extends StatelessWidget {
   Color _detailBorderColor() {
     return switch (goal.status) {
       GoalStatus.todo => AppColors.detailCellBorder,
-      GoalStatus.doing => const Color(0xFFD4A574), // 머스타드
       GoalStatus.done => AppColors.statusDoneBorder,
     };
   }

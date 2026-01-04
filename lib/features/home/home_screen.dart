@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mandalart/core/constants/app_colors.dart';
+import 'package:mandalart/core/constants/grid_constants.dart';
+import 'package:mandalart/core/data/mandalart_templates.dart';
 import 'package:mandalart/core/models/goal.dart';
 import 'package:mandalart/data/db/app_database.dart';
 import 'package:mandalart/data/goal_repository.dart';
 import 'package:mandalart/data/mandalart_repository.dart';
 import 'package:mandalart/features/home/widgets/create_mandalart_sheet.dart';
 import 'package:mandalart/features/home/widgets/mandalart_card.dart';
+import 'package:mandalart/features/home/widgets/template_picker_sheet.dart';
 import 'package:mandalart/features/mandalart/mandalart.dart';
 import 'package:mandalart/features/mandalart/mandalart_detail_screen.dart';
 
@@ -21,16 +24,74 @@ class _HomeScreenState extends State<HomeScreen> {
   final GoalRepository _goalRepository = GoalRepository(appDatabase);
 
   Future<void> _createMandalart() async {
-    final result = await CreateMandalartSheet.show(context);
-    if (result != null) {
-      await _mandalartRepository.saveMandalart(result);
+    // 1. 템플릿 선택
+    final pickerResult = await TemplatePickerSheet.show(context);
+    if (!mounted || pickerResult == null) return; // 취소됨
+
+    // 2. 선택 결과에 따라 템플릿 설정
+    MandalartTemplate? template;
+    if (pickerResult is TemplateSelected) {
+      template = pickerResult.template;
+    }
+    // BlankSelected인 경우 template은 null
+
+    // 3. 만다라트 정보 입력
+    final result = await CreateMandalartSheet.show(context, template: template);
+    if (result == null) return;
+
+    // 4. 만다라트 저장
+    await _mandalartRepository.saveMandalart(result.mandalart);
+
+    // 5. 템플릿 목표 적용
+    if (result.template != null) {
+      await _applyTemplate(result.mandalart.id, result.template!);
+    }
+  }
+
+  /// 템플릿 목표를 DB에 저장
+  Future<void> _applyTemplate(String mandalartId, MandalartTemplate template) async {
+    // 서브 인덱스 순서: [6, 8, 16, 18]
+    const subIndexOrder = [6, 8, 16, 18];
+
+    // 메인 목표 저장
+    await _goalRepository.saveGoal(
+      mandalartId: mandalartId,
+      gridIndex: kMainIndex,
+      text: template.title,
+      status: GoalStatus.todo.value,
+      memo: '',
+    );
+
+    // 서브 목표 저장
+    for (int i = 0; i < 4; i++) {
+      final subIndex = subIndexOrder[i];
+      await _goalRepository.saveGoal(
+        mandalartId: mandalartId,
+        gridIndex: subIndex,
+        text: template.subGoals[i],
+        status: GoalStatus.todo.value,
+        memo: '',
+      );
+
+      // 해당 서브의 세부 목표 저장
+      final detailIndices = kSubGoalDetailMapping[subIndex]!;
+      final detailGoals = template.detailGoals[i]!;
+      for (int j = 0; j < 5; j++) {
+        await _goalRepository.saveGoal(
+          mandalartId: mandalartId,
+          gridIndex: detailIndices[j],
+          text: detailGoals[j],
+          status: GoalStatus.todo.value,
+          memo: '',
+        );
+      }
     }
   }
 
   Future<void> _editMandalart(Mandalart mandalart) async {
     final result = await CreateMandalartSheet.show(context, existing: mandalart);
     if (result != null) {
-      await _mandalartRepository.saveMandalart(result);
+      await _mandalartRepository.saveMandalart(result.mandalart);
     }
   }
 
@@ -68,6 +129,10 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => MandalartDetailScreen(mandalart: mandalart),
       ),
     );
+  }
+
+  Future<void> _togglePin(Mandalart mandalart) async {
+    await _mandalartRepository.togglePin(mandalart.id);
   }
 
   /// 만다라트별 달성률 계산 (25개 기준)
@@ -147,6 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       progressPercent: progress,
                       onTap: () => _openMandalart(mandalart),
                       onLongPress: () => _editMandalart(mandalart),
+                      onPinTap: () => _togglePin(mandalart),
                     ),
                   );
                 },

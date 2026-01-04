@@ -10,12 +10,14 @@ class MandalartCard extends StatelessWidget {
     required this.progressPercent,
     required this.onTap,
     required this.onLongPress,
+    required this.onPinTap,
   });
 
   final Mandalart mandalart;
   final int progressPercent;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final VoidCallback onPinTap;
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +122,26 @@ class MandalartCard extends StatelessWidget {
             ),
 
             const SizedBox(width: 8),
+
+            // 고정핀 버튼
+            GestureDetector(
+              onTap: onPinTap,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  mandalart.isPinned
+                      ? Icons.push_pin
+                      : Icons.push_pin_outlined,
+                  color: mandalart.isPinned
+                      ? AppColors.primary
+                      : AppColors.textTertiary,
+                  size: 20,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 4),
 
             // 화살표
             const Icon(

@@ -9,7 +9,11 @@ class MandalartRepository {
 
   Stream<List<Mandalart>> watchMandalarts() {
     final query = _database.select(_database.mandalarts)
-      ..orderBy([(row) => OrderingTerm.desc(row.updatedAt)]);
+      ..orderBy([
+        // 고정된 항목 먼저, 그 다음 업데이트 순
+        (row) => OrderingTerm.desc(row.isPinned),
+        (row) => OrderingTerm.desc(row.updatedAt),
+      ]);
     return query.watch().map(
           (rows) => rows
               .map(
@@ -18,6 +22,7 @@ class MandalartRepository {
                   title: row.title,
                   emoji: row.emoji,
                   dateRangeLabel: row.dateRangeLabel,
+                  isPinned: row.isPinned,
                 ),
               )
               .toList(),
@@ -33,6 +38,7 @@ class MandalartRepository {
         title: Value(mandalart.title),
         emoji: Value(mandalart.emoji),
         dateRangeLabel: Value(mandalart.dateRangeLabel),
+        isPinned: Value(mandalart.isPinned),
         updatedAt: Value(now),
       ),
     );
@@ -44,11 +50,28 @@ class MandalartRepository {
               title: Value(mandalart.title),
               emoji: Value(mandalart.emoji),
               dateRangeLabel: Value(mandalart.dateRangeLabel),
+              isPinned: Value(mandalart.isPinned),
               createdAt: Value(now),
               updatedAt: Value(now),
             ),
           );
     }
+  }
+
+  /// 고정 상태 토글
+  Future<void> togglePin(String id) async {
+    final query = _database.select(_database.mandalarts)
+      ..where((row) => row.id.equals(id));
+    final row = await query.getSingleOrNull();
+    if (row == null) return;
+
+    await (_database.update(_database.mandalarts)
+          ..where((row) => row.id.equals(id)))
+        .write(
+      MandalartsCompanion(
+        isPinned: Value(!row.isPinned),
+      ),
+    );
   }
 
   Future<void> deleteMandalart(String id) {
@@ -70,6 +93,7 @@ class MandalartRepository {
       title: row.title,
       emoji: row.emoji,
       dateRangeLabel: row.dateRangeLabel,
+      isPinned: row.isPinned,
     );
   }
 }

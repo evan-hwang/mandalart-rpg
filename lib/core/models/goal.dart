@@ -3,30 +3,26 @@ import 'package:mandalart/core/constants/grid_constants.dart';
 /// 목표 상태
 enum GoalStatus {
   todo(0),
-  doing(1),
-  done(2);
+  done(1);
 
   const GoalStatus(this.value);
   final int value;
 
   static GoalStatus fromValue(int value) {
-    return GoalStatus.values.firstWhere(
-      (s) => s.value == value,
-      orElse: () => GoalStatus.todo,
-    );
+    // 기존 doing(1), done(2) 데이터 호환: 1 이상이면 done으로 처리
+    if (value >= 1) return GoalStatus.done;
+    return GoalStatus.todo;
   }
 
   String get label {
     return switch (this) {
       GoalStatus.todo => '할 일',
-      GoalStatus.doing => '진행 중',
       GoalStatus.done => '완료',
     };
   }
 
   GoalStatus get next {
-    final nextIndex = (index + 1) % GoalStatus.values.length;
-    return GoalStatus.values[nextIndex];
+    return this == GoalStatus.todo ? GoalStatus.done : GoalStatus.todo;
   }
 }
 

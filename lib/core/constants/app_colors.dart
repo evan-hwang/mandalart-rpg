@@ -30,7 +30,6 @@ abstract final class AppColors {
 
   // 상태 컬러 (채도 낮춤)
   static const Color statusTodo = Color(0xFFFFFEFB);   // 기본 (오프화이트)
-  static const Color statusDoing = Color(0xFFF5E1D0);  // 진행 중 (소프트 피치)
   static const Color statusDone = Color(0xFFD5E3D1);   // 완료 (소프트 세이지)
   static const Color statusDoneBorder = Color(0xFF9DB89A); // 완료 테두리 (머티드 그린)
   static const Color statusDoneCheck = Color(0xFF7A9E77); // 체크마크 (세이지 그린)

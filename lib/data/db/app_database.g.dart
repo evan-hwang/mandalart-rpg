@@ -47,6 +47,21 @@ class $MandalartsTable extends Mandalarts
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _isPinnedMeta = const VerificationMeta(
+    'isPinned',
+  );
+  @override
+  late final GeneratedColumn<bool> isPinned = GeneratedColumn<bool>(
+    'is_pinned',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pinned" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -75,6 +90,7 @@ class $MandalartsTable extends Mandalarts
     title,
     emoji,
     dateRangeLabel,
+    isPinned,
     createdAt,
     updatedAt,
   ];
@@ -120,6 +136,12 @@ class $MandalartsTable extends Mandalarts
     } else if (isInserting) {
       context.missing(_dateRangeLabelMeta);
     }
+    if (data.containsKey('is_pinned')) {
+      context.handle(
+        _isPinnedMeta,
+        isPinned.isAcceptableOrUnknown(data['is_pinned']!, _isPinnedMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -161,6 +183,10 @@ class $MandalartsTable extends Mandalarts
         DriftSqlType.string,
         data['${effectivePrefix}date_range_label'],
       )!,
+      isPinned: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pinned'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -183,6 +209,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
   final String title;
   final String? emoji;
   final String dateRangeLabel;
+  final bool isPinned;
   final DateTime createdAt;
   final DateTime updatedAt;
   const MandalartEntity({
@@ -190,6 +217,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
     required this.title,
     this.emoji,
     required this.dateRangeLabel,
+    required this.isPinned,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -202,6 +230,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
       map['emoji'] = Variable<String>(emoji);
     }
     map['date_range_label'] = Variable<String>(dateRangeLabel);
+    map['is_pinned'] = Variable<bool>(isPinned);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -215,6 +244,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
           ? const Value.absent()
           : Value(emoji),
       dateRangeLabel: Value(dateRangeLabel),
+      isPinned: Value(isPinned),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -230,6 +260,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
       title: serializer.fromJson<String>(json['title']),
       emoji: serializer.fromJson<String?>(json['emoji']),
       dateRangeLabel: serializer.fromJson<String>(json['dateRangeLabel']),
+      isPinned: serializer.fromJson<bool>(json['isPinned']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -242,6 +273,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
       'title': serializer.toJson<String>(title),
       'emoji': serializer.toJson<String?>(emoji),
       'dateRangeLabel': serializer.toJson<String>(dateRangeLabel),
+      'isPinned': serializer.toJson<bool>(isPinned),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -252,6 +284,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
     String? title,
     Value<String?> emoji = const Value.absent(),
     String? dateRangeLabel,
+    bool? isPinned,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => MandalartEntity(
@@ -259,6 +292,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
     title: title ?? this.title,
     emoji: emoji.present ? emoji.value : this.emoji,
     dateRangeLabel: dateRangeLabel ?? this.dateRangeLabel,
+    isPinned: isPinned ?? this.isPinned,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -270,6 +304,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
       dateRangeLabel: data.dateRangeLabel.present
           ? data.dateRangeLabel.value
           : this.dateRangeLabel,
+      isPinned: data.isPinned.present ? data.isPinned.value : this.isPinned,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -282,6 +317,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
           ..write('title: $title, ')
           ..write('emoji: $emoji, ')
           ..write('dateRangeLabel: $dateRangeLabel, ')
+          ..write('isPinned: $isPinned, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -289,8 +325,15 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, title, emoji, dateRangeLabel, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+    id,
+    title,
+    emoji,
+    dateRangeLabel,
+    isPinned,
+    createdAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -299,6 +342,7 @@ class MandalartEntity extends DataClass implements Insertable<MandalartEntity> {
           other.title == this.title &&
           other.emoji == this.emoji &&
           other.dateRangeLabel == this.dateRangeLabel &&
+          other.isPinned == this.isPinned &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -308,6 +352,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
   final Value<String> title;
   final Value<String?> emoji;
   final Value<String> dateRangeLabel;
+  final Value<bool> isPinned;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -316,6 +361,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
     this.title = const Value.absent(),
     this.emoji = const Value.absent(),
     this.dateRangeLabel = const Value.absent(),
+    this.isPinned = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -325,6 +371,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
     required String title,
     this.emoji = const Value.absent(),
     required String dateRangeLabel,
+    this.isPinned = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -338,6 +385,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
     Expression<String>? title,
     Expression<String>? emoji,
     Expression<String>? dateRangeLabel,
+    Expression<bool>? isPinned,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -347,6 +395,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
       if (title != null) 'title': title,
       if (emoji != null) 'emoji': emoji,
       if (dateRangeLabel != null) 'date_range_label': dateRangeLabel,
+      if (isPinned != null) 'is_pinned': isPinned,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -358,6 +407,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
     Value<String>? title,
     Value<String?>? emoji,
     Value<String>? dateRangeLabel,
+    Value<bool>? isPinned,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -367,6 +417,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
       title: title ?? this.title,
       emoji: emoji ?? this.emoji,
       dateRangeLabel: dateRangeLabel ?? this.dateRangeLabel,
+      isPinned: isPinned ?? this.isPinned,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -388,6 +439,9 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
     if (dateRangeLabel.present) {
       map['date_range_label'] = Variable<String>(dateRangeLabel.value);
     }
+    if (isPinned.present) {
+      map['is_pinned'] = Variable<bool>(isPinned.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -407,6 +461,7 @@ class MandalartsCompanion extends UpdateCompanion<MandalartEntity> {
           ..write('title: $title, ')
           ..write('emoji: $emoji, ')
           ..write('dateRangeLabel: $dateRangeLabel, ')
+          ..write('isPinned: $isPinned, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -944,6 +999,7 @@ typedef $$MandalartsTableCreateCompanionBuilder =
       required String title,
       Value<String?> emoji,
       required String dateRangeLabel,
+      Value<bool> isPinned,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -954,6 +1010,7 @@ typedef $$MandalartsTableUpdateCompanionBuilder =
       Value<String> title,
       Value<String?> emoji,
       Value<String> dateRangeLabel,
+      Value<bool> isPinned,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -985,6 +1042,11 @@ class $$MandalartsTableFilterComposer
 
   ColumnFilters<String> get dateRangeLabel => $composableBuilder(
     column: $table.dateRangeLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPinned => $composableBuilder(
+    column: $table.isPinned,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1028,6 +1090,11 @@ class $$MandalartsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isPinned => $composableBuilder(
+    column: $table.isPinned,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -1061,6 +1128,9 @@ class $$MandalartsTableAnnotationComposer
     column: $table.dateRangeLabel,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isPinned =>
+      $composableBuilder(column: $table.isPinned, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -1104,6 +1174,7 @@ class $$MandalartsTableTableManager
                 Value<String> title = const Value.absent(),
                 Value<String?> emoji = const Value.absent(),
                 Value<String> dateRangeLabel = const Value.absent(),
+                Value<bool> isPinned = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1112,6 +1183,7 @@ class $$MandalartsTableTableManager
                 title: title,
                 emoji: emoji,
                 dateRangeLabel: dateRangeLabel,
+                isPinned: isPinned,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -1122,6 +1194,7 @@ class $$MandalartsTableTableManager
                 required String title,
                 Value<String?> emoji = const Value.absent(),
                 required String dateRangeLabel,
+                Value<bool> isPinned = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -1130,6 +1203,7 @@ class $$MandalartsTableTableManager
                 title: title,
                 emoji: emoji,
                 dateRangeLabel: dateRangeLabel,
+                isPinned: isPinned,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

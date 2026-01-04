@@ -58,9 +58,9 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
   Future<void> _editMandalart() async {
     final result = await CreateMandalartSheet.show(context, existing: _mandalart);
     if (result != null) {
-      await _mandalartRepository.saveMandalart(result);
+      await _mandalartRepository.saveMandalart(result.mandalart);
       setState(() {
-        _mandalart = result;
+        _mandalart = result.mandalart;
       });
     }
   }
