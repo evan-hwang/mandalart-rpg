@@ -93,9 +93,15 @@ class MandalartCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      const Icon(
+                        Icons.flag_outlined,
+                        size: 13,
+                        color: AppColors.textTertiary,
+                      ),
+                      const SizedBox(width: 3),
                       Expanded(
                         child: Text(
-                          mandalart.dateRangeLabel,
+                          '목표 ${mandalart.dateRangeLabel}',
                           style: const TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
