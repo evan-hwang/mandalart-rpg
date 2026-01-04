@@ -138,10 +138,10 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        title: const Text('만다라트'),
+        title: const Text('한다라트'),
         leading: IconButton(
           icon: const Icon(Icons.grid_view),
-          tooltip: '만다라트 목록',
+          tooltip: '한다라트 목록',
           onPressed: () => _goToHome(),
         ),
       ),
@@ -222,7 +222,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('만다라트 삭제'),
+        title: const Text('한다라트 삭제'),
         content: Text(
           '"${widget.mandalart.title}"을(를) 삭제하시겠습니까?\n모든 목표도 함께 삭제됩니다.',
         ),
@@ -261,7 +261,7 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
-                title: const Text('만다라트 수정'),
+                title: const Text('한다라트 수정'),
                 onTap: () {
                   Navigator.pop(context);
                   // TODO: 수정 기능

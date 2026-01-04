@@ -114,7 +114,7 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
 
               // 제목
               Text(
-                _isEditing ? '만다라트 수정' : '새 만다라트 만들기',
+                _isEditing ? '한다라트 수정' : '새 한다라트 만들기',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
@@ -136,7 +136,7 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
                 controller: _titleController,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  labelText: '만다라트 제목',
+                  labelText: '한다라트 제목',
                   hintText: '예: 2025년 목표, 발전하는 나',
                 ),
                 textInputAction: TextInputAction.next,

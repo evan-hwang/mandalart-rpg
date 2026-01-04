@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('만다라트 삭제'),
+        title: const Text('한다라트 삭제'),
         content: Text('"${mandalart.title}"을(를) 삭제하시겠습니까?\n모든 목표도 함께 삭제됩니다.'),
         actions: [
           TextButton(
@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title: const Text('만다라트'),
+        title: const Text('한다라트'),
       ),
       body: StreamBuilder<List<Mandalart>>(
         stream: _mandalartRepository.watchMandalarts(),
@@ -192,7 +192,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             const Text(
-              '아직 만다라트가 없어요',
+              '아직 한다라트가 없어요',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -213,7 +213,7 @@ class _EmptyState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onCreate,
               icon: const Icon(Icons.add),
-              label: const Text('첫 만다라트 만들기'),
+              label: const Text('첫 한다라트 만들기'),
             ),
           ],
         ),
