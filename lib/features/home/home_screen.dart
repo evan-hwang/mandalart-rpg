@@ -148,7 +148,6 @@ class _HomeScreenState extends State<HomeScreen> {
         text: e.goalText,
         status: GoalStatus.fromValue(e.status),
         memo: e.memo ?? '',
-        updatedAt: e.updatedAt,
       );
     }).toList();
 

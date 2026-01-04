@@ -34,7 +34,6 @@ class Goal {
     this.text = '',
     this.status = GoalStatus.todo,
     this.memo = '',
-    this.updatedAt,
   });
 
   final String mandalartId;
@@ -42,7 +41,6 @@ class Goal {
   final String text;
   final GoalStatus status;
   final String memo;
-  final DateTime? updatedAt;
 
   /// 셀 역할
   CellRole get role => roleForIndex(gridIndex);
@@ -53,9 +51,6 @@ class Goal {
   /// 완료 여부
   bool get isDone => status == GoalStatus.done;
 
-  /// 메모가 있는지
-  bool get hasMemo => memo.isNotEmpty;
-
   /// 복사본 생성
   Goal copyWith({
     String? mandalartId,
@@ -63,7 +58,6 @@ class Goal {
     String? text,
     GoalStatus? status,
     String? memo,
-    DateTime? updatedAt,
   }) {
     return Goal(
       mandalartId: mandalartId ?? this.mandalartId,
@@ -71,7 +65,6 @@ class Goal {
       text: text ?? this.text,
       status: status ?? this.status,
       memo: memo ?? this.memo,
-      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -83,13 +76,12 @@ class Goal {
         other.gridIndex == gridIndex &&
         other.text == text &&
         other.status == status &&
-        other.memo == memo &&
-        other.updatedAt == updatedAt;
+        other.memo == memo;
   }
 
   @override
   int get hashCode {
-    return Object.hash(mandalartId, gridIndex, text, status, memo, updatedAt);
+    return Object.hash(mandalartId, gridIndex, text, status, memo);
   }
 }
 

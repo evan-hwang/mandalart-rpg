@@ -130,20 +130,6 @@ class _MandalartCellState extends State<MandalartCell>
                       ),
                     ),
                   ),
-                  // 메모 인디케이터 (우하단 점)
-                  if (widget.goal.hasMemo)
-                    Positioned(
-                      right: 4,
-                      bottom: 4,
-                      child: Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
