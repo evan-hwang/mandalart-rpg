@@ -95,6 +95,12 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       context,
       subGoal: subGoal,
       detailGoals: detailGoals,
+      onGoalTap: (goal) async {
+        // 세부 목표 편집 시트 열기
+        final updatedGoal = await GoalEditSheet.show(context, goal);
+        if (updatedGoal == null) return;
+        await _saveGoal(updatedGoal);
+      },
     );
   }
 
