@@ -31,122 +31,121 @@ class MandalartCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.divider),
         ),
-        child: Row(
+        child: Stack(
           children: [
-            // 이모지 또는 아이콘
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: mandalart.emoji != null && mandalart.emoji!.isNotEmpty
-                    ? Text(
-                        mandalart.emoji!,
-                        style: const TextStyle(fontSize: 24),
-                      )
-                    : const Icon(
-                        Icons.flag_rounded,
-                        color: AppColors.primary,
-                        size: 24,
-                      ),
-              ),
-            ),
-
-            const SizedBox(width: 14),
-
-            // 제목 + 기간 + 프로그레스
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    mandalart.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            Row(
+              children: [
+                // 이모지 또는 아이콘
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
+                  child: Center(
+                    child: mandalart.emoji != null && mandalart.emoji!.isNotEmpty
+                        ? Text(
+                            mandalart.emoji!,
+                            style: const TextStyle(fontSize: 24),
+                          )
+                        : const Icon(
+                            Icons.flag_rounded,
+                            color: AppColors.primary,
+                            size: 24,
+                          ),
+                  ),
+                ),
+
+                const SizedBox(width: 14),
+
+                // 제목 + 기간 + 프로그레스
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$progressPercent% 달성',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: progressPercent > 0
-                              ? AppColors.primaryDark
-                              : AppColors.textTertiary,
-                          fontWeight: progressPercent > 0
-                              ? FontWeight.w500
-                              : FontWeight.w400,
+                        mandalart.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '·',
-                        style: TextStyle(
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.flag_outlined,
-                        size: 13,
-                        color: AppColors.textTertiary,
-                      ),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          '목표 ${mandalart.dateRangeLabel}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            '$progressPercent% 달성',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: progressPercent > 0
+                                  ? AppColors.primaryDark
+                                  : AppColors.textTertiary,
+                              fontWeight: progressPercent > 0
+                                  ? FontWeight.w500
+                                  : FontWeight.w400,
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '·',
+                            style: TextStyle(
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.flag_outlined,
+                            size: 13,
+                            color: AppColors.textTertiary,
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              '목표 ${mandalart.dateRangeLabel}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 10),
+                      // 프로그레스 바
+                      _MiniProgressBar(progress: progressPercent / 100),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  // 프로그레스 바
-                  _MiniProgressBar(progress: progressPercent / 100),
-                ],
-              ),
+                ),
+
+              ],
             ),
 
-            const SizedBox(width: 8),
-
-            // 고정핀 버튼
-            GestureDetector(
-              onTap: onPinTap,
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  mandalart.isPinned
-                      ? Icons.push_pin
-                      : Icons.push_pin_outlined,
-                  color: mandalart.isPinned
-                      ? AppColors.primary
-                      : AppColors.textTertiary,
-                  size: 20,
+            // 오른쪽 상단 고정핀 버튼
+            Positioned(
+              top: -8,
+              right: -8,
+              child: GestureDetector(
+                onTap: onPinTap,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    mandalart.isPinned
+                        ? Icons.push_pin
+                        : Icons.push_pin_outlined,
+                    color: mandalart.isPinned
+                        ? AppColors.primary
+                        : AppColors.textTertiary,
+                    size: 18,
+                  ),
                 ),
               ),
-            ),
-
-            const SizedBox(width: 4),
-
-            // 화살표
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.textTertiary,
             ),
           ],
         ),

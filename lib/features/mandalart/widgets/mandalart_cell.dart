@@ -35,9 +35,11 @@ class _MandalartCellState extends State<MandalartCell>
   void initState() {
     super.initState();
 
-    // 첫 프레임 이후에 초기화 완료 표시 (데이터 로딩 애니메이션 방지)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _isInitialized = true;
+    // 데이터 로딩 완료 후 초기화 (500ms 딜레이로 로딩 애니메이션 방지)
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _isInitialized = true;
+      }
     });
 
     _animationController = AnimationController(
