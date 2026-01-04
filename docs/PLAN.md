@@ -247,7 +247,7 @@ double calculateProgress(List<GoalEntity> goals) {
 
 ### Release 2: UX & 시각화
 #### TODO
-- [ ] 이미지 선택 기능 (카메라 롤 또는 사전 제공 이미지)
+- [x] 이미지 선택 기능 → 이모지 선택 기능으로 구현
 - [ ] 목표 기한 설정 UI
 - [ ] 서브 목표별 진행률 표시
 - [ ] 상태 변화 시 애니메이션

@@ -50,48 +50,10 @@ class MandalartCell extends StatelessWidget {
                 ),
               ),
             ),
-            // 완료된 서브/메인에 체크 표시
-            if (_showCompleteBadge)
-              Positioned(
-                right: 2,
-                top: 2,
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: _completeBadgeColor,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: _completeBadgeColor.withValues(alpha: 0.4),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.check,
-                    size: 10,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
-  }
-
-  /// 완료 배지를 표시할지
-  bool get _showCompleteBadge {
-    if (goal.role == CellRole.sub && isAreaComplete) return true;
-    if (goal.role == CellRole.main && isAllComplete) return true;
-    return false;
-  }
-
-  /// 완료 배지 색상
-  Color get _completeBadgeColor {
-    if (isAllComplete) return const Color(0xFFD4A574); // 골드/머스타드
-    return AppColors.statusDoneCheck; // 세이지 그린
   }
 
   BoxDecoration _buildDecoration(CellRole role) {
