@@ -95,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
+        automaticallyImplyLeading: false,
         title: const Text('한다라트'),
       ),
       body: StreamBuilder<List<Mandalart>>(

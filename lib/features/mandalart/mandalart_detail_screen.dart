@@ -201,12 +201,21 @@ class _MandalartDetailScreenState extends State<MandalartDetailScreen> {
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        title: const Text('한다라트'),
         leading: IconButton(
-          icon: const Icon(Icons.grid_view),
-          tooltip: '한다라트 목록',
+          icon: const Icon(Icons.arrow_back_ios_new),
           onPressed: () => _goToHome(),
         ),
+        title: Text(
+          widget.mandalart.title,
+          style: const TextStyle(fontSize: 18),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_view),
+            tooltip: '한다라트 목록',
+            onPressed: () => _goToHome(),
+          ),
+        ],
       ),
       body: StreamBuilder<List<GoalEntity>>(
         stream: _repository.watchGoals(widget.mandalart.id),
