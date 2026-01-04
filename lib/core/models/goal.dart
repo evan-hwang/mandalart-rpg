@@ -121,6 +121,28 @@ extension GoalListExtension on List<Goal> {
     return true;
   }
 
+  /// 서브별 완료된 세부 과제 개수 (0~5)
+  int subGoalDoneCount(int subIndex) {
+    final detailIndices = kSubGoalDetailMapping[subIndex];
+    if (detailIndices == null) return 0;
+    int count = 0;
+    for (final idx in detailIndices) {
+      final goal = goalAt(idx);
+      if (goal != null && goal.isDone) count++;
+    }
+    return count;
+  }
+
+  /// 서브별 진행률 (0.0 ~ 1.0)
+  double subGoalProgress(int subIndex) {
+    return subGoalDoneCount(subIndex) / 5;
+  }
+
+  /// 서브 목표 이름 가져오기
+  String? subGoalText(int subIndex) {
+    return goalAt(subIndex)?.text;
+  }
+
   /// 모든 서브 과제가 완료되었는지
   bool get allSubGoalsComplete {
     for (final subIndex in kSubIndices) {
