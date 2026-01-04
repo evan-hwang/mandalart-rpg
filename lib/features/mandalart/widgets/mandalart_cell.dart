@@ -5,7 +5,7 @@ import 'package:mandalart/core/constants/grid_constants.dart';
 import 'package:mandalart/core/models/goal.dart';
 
 /// 만다라트 그리드 셀 위젯
-class MandalartCell extends StatelessWidget {
+class MandalartCell extends StatefulWidget {
   const MandalartCell({
     super.key,
     required this.goal,
@@ -22,36 +22,144 @@ class MandalartCell extends StatelessWidget {
   final bool isAllComplete;  // 모든 영역이 완료됨 (메인 완료)
 
   @override
+  State<MandalartCell> createState() => _MandalartCellState();
+}
+
+class _MandalartCellState extends State<MandalartCell>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _bounceAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    // 바운스 효과: 1.0 -> 1.15 -> 0.95 -> 1.0
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.15)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.15, end: 0.95)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 0.95, end: 1.0)
+            .chain(CurveTween(curve: Curves.elasticOut)),
+        weight: 40,
+      ),
+    ]).animate(_animationController);
+
+    // 완료 시 추가 바운스
+    _bounceAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.elasticOut,
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(MandalartCell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 상태가 변경되었을 때 애니메이션 트리거
+    if (oldWidget.goal.status != widget.goal.status) {
+      _triggerStatusAnimation(widget.goal.status);
+    }
+  }
+
+  void _triggerStatusAnimation(GoalStatus newStatus) {
+    // 완료 상태로 변경될 때 더 강한 애니메이션
+    if (newStatus == GoalStatus.done) {
+      _animationController.forward(from: 0);
+    } else {
+      // 다른 상태 변경 시 약한 애니메이션
+      _animationController.forward(from: 0.3);
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final role = goal.role;
+    final role = widget.goal.role;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       onLongPress: () {
         HapticFeedback.mediumImpact();
-        onLongPress();
+        widget.onLongPress();
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        decoration: _buildDecoration(role),
-        child: Stack(
-          children: [
-            // 메인 콘텐츠
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Text(
-                  goal.text.isEmpty ? _placeholderText(role) : goal.text,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: _textStyle(role, goal.text.isEmpty),
-                ),
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              decoration: _buildDecoration(role),
+              child: Stack(
+                children: [
+                  // 메인 콘텐츠
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Text(
+                        widget.goal.text.isEmpty
+                            ? _placeholderText(role)
+                            : widget.goal.text,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: _textStyle(role, widget.goal.text.isEmpty),
+                      ),
+                    ),
+                  ),
+                  // 완료 시 체크마크 오버레이 (세부 과제만)
+                  if (widget.goal.isDone && role == CellRole.detail)
+                    Positioned.fill(
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: widget.goal.isDone ? 1.0 : 0.0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: AnimatedScale(
+                              duration: const Duration(milliseconds: 300),
+                              scale: _animationController.isAnimating
+                                  ? _bounceAnimation.value
+                                  : 1.0,
+                              child: const Icon(
+                                Icons.check_rounded,
+                                color: AppColors.success,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -59,12 +167,12 @@ class MandalartCell extends StatelessWidget {
   BoxDecoration _buildDecoration(CellRole role) {
     return switch (role) {
       CellRole.main => BoxDecoration(
-          color: isAllComplete ? const Color(0xFF1E2D3D) : AppColors.mainCell,
+          color: widget.isAllComplete ? const Color(0xFF1E2D3D) : AppColors.mainCell,
           borderRadius: BorderRadius.circular(12),
-          border: isAllComplete
+          border: widget.isAllComplete
               ? Border.all(color: const Color(0xFFD4A574), width: 2)
               : null,
-          boxShadow: isAllComplete
+          boxShadow: widget.isAllComplete
               ? [
                   BoxShadow(
                     color: const Color(0xFFD4A574).withValues(alpha: 0.3),
@@ -75,11 +183,11 @@ class MandalartCell extends StatelessWidget {
               : null,
         ),
       CellRole.sub => BoxDecoration(
-          color: isAreaComplete
+          color: widget.isAreaComplete
               ? const Color(0xFFB8956A) // 진한 머스타드
               : AppColors.subCell,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: isAreaComplete
+          boxShadow: widget.isAreaComplete
               ? [
                   BoxShadow(
                     color: AppColors.primaryDark.withValues(alpha: 0.3),
@@ -94,21 +202,21 @@ class MandalartCell extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: _detailBorderColor(),
-            width: goal.isDone ? 2 : 1,
+            width: widget.goal.isDone ? 2 : 1,
           ),
         ),
     };
   }
 
   Color _detailCellColor() {
-    return switch (goal.status) {
+    return switch (widget.goal.status) {
       GoalStatus.todo => AppColors.statusTodo,
       GoalStatus.done => AppColors.statusDone,
     };
   }
 
   Color _detailBorderColor() {
-    return switch (goal.status) {
+    return switch (widget.goal.status) {
       GoalStatus.todo => AppColors.detailCellBorder,
       GoalStatus.done => AppColors.statusDoneBorder,
     };
@@ -117,13 +225,13 @@ class MandalartCell extends StatelessWidget {
   TextStyle _textStyle(CellRole role, bool isEmpty) {
     final baseStyle = switch (role) {
       CellRole.main => TextStyle(
-          color: isAllComplete ? const Color(0xFFD4A574) : AppColors.mainCellText,
+          color: widget.isAllComplete ? const Color(0xFFD4A574) : AppColors.mainCellText,
           fontSize: 11,
           fontWeight: FontWeight.w700,
           height: 1.3,
         ),
       CellRole.sub => TextStyle(
-          color: isAreaComplete ? const Color(0xFFFFFEFB) : AppColors.subCellText,
+          color: widget.isAreaComplete ? const Color(0xFFFFFEFB) : AppColors.subCellText,
           fontSize: 11,
           fontWeight: FontWeight.w600,
           height: 1.3,
