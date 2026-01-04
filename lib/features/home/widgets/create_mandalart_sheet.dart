@@ -27,6 +27,7 @@ class CreateMandalartSheet extends StatefulWidget {
 class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
   late final TextEditingController _titleController;
   late final TextEditingController _deadlineController;
+  DateTime? _selectedDate;
 
   bool get _isEditing => widget.existing != null;
 
@@ -44,6 +45,22 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
     _titleController.dispose();
     _deadlineController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2030),
+    );
+    if (date != null) {
+      setState(() {
+        _selectedDate = date;
+        _deadlineController.text =
+            '${date.year}년 ${date.month}월 ${date.day}일';
+      });
+    }
   }
 
   void _save() {
@@ -129,12 +146,13 @@ class _CreateMandalartSheetState extends State<CreateMandalartSheet> {
               // 기간 입력
               TextField(
                 controller: _deadlineController,
+                readOnly: true,
+                onTap: _pickDate,
                 decoration: const InputDecoration(
                   labelText: '목표 기간 (선택)',
-                  hintText: '예: ~25년 12월 31일',
+                  hintText: '날짜를 선택하세요',
+                  suffixIcon: Icon(Icons.calendar_today),
                 ),
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _save(),
               ),
               const SizedBox(height: 24),
 
